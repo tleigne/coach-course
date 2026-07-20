@@ -1,0 +1,19 @@
+# Dépendances
+node_modules/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+
+# Environnement / secrets
+.env
