@@ -24,8 +24,9 @@ voix, en français.
   avoir de vrai parcours sous la main.
 - [`outils/`](outils) — scripts de développement (génération des icônes, du
   GPX d'exemple, petit serveur local pour tester sans connexion).
-- [`CLAUDE.md`](CLAUDE.md), [`PROJECT_BRIEF.md`](PROJECT_BRIEF.md) — le cahier
-  des charges du projet.
+- [`CAHIER_DES_CHARGES.md`](CAHIER_DES_CHARGES.md) — vision, périmètre et
+  décisions techniques du projet.
+- [`ROADMAP.md`](ROADMAP.md) — pistes d'amélioration après le MVP.
 
 ## Installer l'appli sur ton téléphone
 
@@ -45,6 +46,7 @@ synthèse vocale) est testable ainsi.
 
 ## Périmètre du MVP
 
-Voir [`CLAUDE.md`](CLAUDE.md) pour le détail verrouillé. En résumé : import
-GPX manuel (pas de connexion Strava), pas de musique adaptative, appli au
-premier plan (écran allumé) — ces points sont prévus pour une V2.
+Voir [`CAHIER_DES_CHARGES.md`](CAHIER_DES_CHARGES.md) pour le détail
+verrouillé. En résumé : import GPX manuel (pas de connexion Strava), pas de
+musique adaptative, appli au premier plan (écran allumé) — ces points sont
+prévus pour une V2 (voir [`ROADMAP.md`](ROADMAP.md)).
