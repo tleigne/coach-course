@@ -1,0 +1,244 @@
+/* Thème sombre, gros texte lisible en extérieur / plein soleil / en courant. */
+
+:root {
+  --fond: #0d1117;
+  --fond-carte: #161b22;
+  --accent: #ff7a1a;
+  --accent-vert: #2ecc71;
+  --texte: #f5f5f5;
+  --texte-attenue: #9aa4af;
+  --erreur: #ff5c5c;
+  --bordure: #2a323c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  min-height: 100vh;
+}
+
+.ecran {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ecran.actif {
+  display: flex;
+}
+
+h1 {
+  font-size: 1.8rem;
+  margin: 0 0 4px;
+}
+
+.sous-titre {
+  color: var(--texte-attenue);
+  margin: 0 0 12px;
+}
+
+.bouton-principal {
+  display: block;
+  text-align: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.bouton-demarrer {
+  font-size: 1.3rem;
+  padding: 20px;
+}
+
+.bouton-secondaire {
+  flex: 1;
+  padding: 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid var(--bordure);
+  background: transparent;
+  color: var(--texte);
+  cursor: pointer;
+}
+
+.bouton-danger {
+  flex: 1;
+  padding: 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  background: var(--erreur);
+  color: #fff;
+  cursor: pointer;
+}
+
+.cache {
+  display: none !important;
+}
+
+.erreur {
+  color: var(--erreur);
+  font-weight: 600;
+  min-height: 1.2em;
+}
+
+.info, .info-gps {
+  color: var(--texte-attenue);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.carte {
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stats-parcours {
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.stats-parcours > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.valeur {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.etiquette {
+  display: block;
+  color: var(--texte-attenue);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profil {
+  width: 100%;
+  height: 90px;
+}
+
+.profil svg {
+  width: 100%;
+  height: 100%;
+}
+
+.profil-remplissage {
+  fill: rgba(255, 122, 26, 0.18);
+}
+
+.profil-ligne {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+/* --- Écran objectif --- */
+
+.choix-objectif {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  padding: 8px 0;
+}
+
+.choix-objectif input {
+  width: 20px;
+  height: 20px;
+}
+
+.bloc-saisie {
+  padding: 0 0 8px 30px;
+}
+
+.bloc-saisie input[type="text"] {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: 2px solid var(--bordure);
+  background: var(--fond-carte);
+  color: var(--texte);
+}
+
+/* --- Écran course : gros chiffres, lisible en plein effort --- */
+
+.gros-chiffre {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.gros-chiffre span:first-child {
+  display: block;
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.ligne-stats {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.valeur-moyenne {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.ligne-ecart {
+  text-align: center;
+}
+
+#course-ecart {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent-vert);
+}
+
+#course-ecart.negatif {
+  color: var(--erreur);
+}
+
+.info-gps {
+  text-align: center;
+}
+
+.boutons-course {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
