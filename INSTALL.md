@@ -57,8 +57,13 @@ un compte Netlify gratuit pour gérer le site dans la durée).
 
 ## Installation sur Android (après avoir choisi l'option A ou B)
 
-1. Sur ton téléphone Android, ouvre **Chrome** (pas un navigateur intégré à
-   WhatsApp, Messenger ou une autre appli — ouvre bien Chrome lui-même).
+**Important : utilise Chrome, pas Firefox.** Firefox pour Android ne sait pas
+installer une vraie application autonome (l'icône rouvrirait le site comme un
+onglet classique, avec la barre d'adresse) — c'est une limitation du
+navigateur, pas de l'appli. Edge et Samsung Internet fonctionnent aussi.
+
+1. Sur ton téléphone Android, ouvre **Chrome** (pas Firefox, pas un
+   navigateur intégré à WhatsApp, Messenger ou une autre appli).
 2. Va sur l'adresse https de ton appli (celle obtenue à l'étape précédente).
 3. Un bandeau **"Installer l'application"** doit apparaître directement en
    haut de l'appli. Appuie dessus, puis confirme dans la boîte de dialogue qui

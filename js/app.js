@@ -405,17 +405,31 @@ const boutonInstallerPlusTard = document.getElementById('bouton-installer-plus-t
 const TEXTE_INSTALLATION_DEFAUT = "Installe l'appli sur ton écran d'accueil pour un accès plus rapide, comme une vraie application.";
 const TEXTE_INSTALLATION_MANUELLE =
   "Appuie sur le menu ⋮ en haut à droite de Chrome, puis sur « Installer l'application » (ou « Ajouter à l'écran d'accueil »).";
+const TEXTE_INSTALLATION_FIREFOX =
+  "Firefox ne permet pas d'installer complètement cette appli (elle continuerait à s'ouvrir comme une page web classique). Ouvre ce lien dans Chrome pour une vraie installation.";
+
+function estFirefox() {
+  return /firefox/i.test(navigator.userAgent);
+}
 
 function appliDejaInstallee() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
 if (!appliDejaInstallee()) {
-  // Laisse une chance à beforeinstallprompt d'arriver avant d'afficher le bandeau,
-  // pour privilégier le bouton natif quand il est disponible.
-  setTimeout(() => {
-    if (!appliDejaInstallee()) bandeauInstallation.classList.remove('cache');
-  }, 1200);
+  if (estFirefox()) {
+    // Firefox Android ne déclenche jamais beforeinstallprompt et ne propose pas
+    // de vrai mode autonome : inutile d'attendre, on informe tout de suite.
+    texteInstallation.textContent = TEXTE_INSTALLATION_FIREFOX;
+    boutonInstaller.classList.add('cache');
+    bandeauInstallation.classList.remove('cache');
+  } else {
+    // Laisse une chance à beforeinstallprompt d'arriver avant d'afficher le bandeau,
+    // pour privilégier le bouton natif quand il est disponible.
+    setTimeout(() => {
+      if (!appliDejaInstallee()) bandeauInstallation.classList.remove('cache');
+    }, 1200);
+  }
 }
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
