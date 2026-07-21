@@ -35,13 +35,16 @@ self.addEventListener('activate', (event) => {
 
 // Réseau en priorité (pour toujours avoir la dernière version quand il y a du
 // signal), avec repli sur le cache seulement si le réseau échoue (vraiment
-// hors-ligne, ex. en pleine nature pendant une course). Ça évite de rester
-// bloqué sur une version obsolète si le cache a été rempli au mauvais moment.
+// hors-ligne, ex. en pleine nature pendant une course). On force `cache:
+// 'no-store'` sur la requête réseau : sinon ce fetch peut lui-même être
+// satisfait par le cache HTTP normal du navigateur (distinct du Cache Storage
+// ci-dessus), qui a pu mémoriser une ancienne réponse — ce qui annule tout
+// l'intérêt du réseau-prioritaire.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request.url, { cache: 'no-store' })
       .then((reponseReseau) => {
         const copie = reponseReseau.clone();
         caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copie));
