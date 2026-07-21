@@ -57,15 +57,23 @@ un compte Netlify gratuit pour gérer le site dans la durée).
 
 ## Installation sur Android (après avoir choisi l'option A ou B)
 
-1. Sur ton téléphone Android, ouvre **Chrome**.
+1. Sur ton téléphone Android, ouvre **Chrome** (pas un navigateur intégré à
+   WhatsApp, Messenger ou une autre appli — ouvre bien Chrome lui-même).
 2. Va sur l'adresse https de ton appli (celle obtenue à l'étape précédente).
-3. Appuie sur le menu **⋮** (trois points, en haut à droite).
-4. Appuie sur **Ajouter à l'écran d'accueil** (ou **Installer l'application**
-   si Chrome le propose directement).
-5. Confirme. Une icône "Coach Course" apparaît sur ton écran d'accueil,
-   comme une vraie application.
-6. Ouvre-la depuis cette icône : elle s'affiche en plein écran, sans la barre
-   d'adresse de Chrome.
+3. Un bandeau **"Installer l'application"** doit apparaître directement en
+   haut de l'appli. Appuie dessus, puis confirme dans la boîte de dialogue qui
+   s'ouvre. C'est tout : une icône "Coach Course" apparaît sur ton écran
+   d'accueil, comme une vraie application.
+
+**Si le bandeau n'apparaît pas** (ça peut arriver selon la version de Chrome) :
+4. Appuie sur le menu **⋮** (trois points, en haut à droite de Chrome).
+5. Appuie sur **Installer l'application** (ou **Ajouter à l'écran d'accueil**).
+6. Confirme.
+
+Dans les deux cas, ouvre ensuite l'appli depuis son icône sur l'écran
+d'accueil (pas depuis Chrome) : elle doit s'afficher en plein écran, sans la
+barre d'adresse du navigateur. Si elle s'ouvre quand même comme une page
+Chrome normale (avec la barre d'adresse visible), dis-le-moi.
 
 ## Premier lancement : autorisations à accepter
 
