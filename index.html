@@ -15,7 +15,7 @@
 <main id="app">
 
   <div id="bandeau-installation" class="bandeau-installation cache">
-    <span>Installe l'appli sur ton écran d'accueil pour un accès plus rapide, comme une vraie application.</span>
+    <span id="texte-installation">Installe l'appli sur ton écran d'accueil pour un accès plus rapide, comme une vraie application.</span>
     <div class="bandeau-installation-boutons">
       <button id="bouton-installer" class="bouton-principal">Installer l'application</button>
       <button id="bouton-installer-plus-tard" class="bouton-texte">Plus tard</button>
@@ -28,7 +28,7 @@
     <p class="sous-titre">Importe ton parcours pour commencer.</p>
 
     <label class="bouton-principal" for="fichier-gpx">Choisir un fichier GPX</label>
-    <input type="file" id="fichier-gpx" accept=".gpx" hidden />
+    <input type="file" id="fichier-gpx" accept=".gpx,application/gpx+xml,application/octet-stream,application/xml,text/xml,.xml" hidden />
 
     <p id="erreur-import" class="erreur"></p>
 

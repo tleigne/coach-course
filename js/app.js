@@ -369,16 +369,32 @@ if ('serviceWorker' in navigator) {
 }
 
 // ===================== INSTALLATION SUR L'ÉCRAN D'ACCUEIL =====================
-// Affiche un bouton "Installer l'application" dès que le navigateur juge l'appli
-// installable, pour éviter d'avoir à chercher l'option dans les menus du téléphone.
+// Affiche toujours un moyen visible d'installer l'appli : soit le bouton natif
+// (si le navigateur propose l'événement beforeinstallprompt), soit, à défaut,
+// des instructions manuelles claires. On n'attend pas silencieusement un
+// événement qui peut ne jamais arriver (heuristiques d'engagement variables
+// selon les versions de Chrome).
 
 let evenementInstallDiffere = null;
 const bandeauInstallation = document.getElementById('bandeau-installation');
+const texteInstallation = document.getElementById('texte-installation');
 const boutonInstaller = document.getElementById('bouton-installer');
 const boutonInstallerPlusTard = document.getElementById('bouton-installer-plus-tard');
 
+const TEXTE_INSTALLATION_DEFAUT = "Installe l'appli sur ton écran d'accueil pour un accès plus rapide, comme une vraie application.";
+const TEXTE_INSTALLATION_MANUELLE =
+  "Appuie sur le menu ⋮ en haut à droite de Chrome, puis sur « Installer l'application » (ou « Ajouter à l'écran d'accueil »).";
+
 function appliDejaInstallee() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+if (!appliDejaInstallee()) {
+  // Laisse une chance à beforeinstallprompt d'arriver avant d'afficher le bandeau,
+  // pour privilégier le bouton natif quand il est disponible.
+  setTimeout(() => {
+    if (!appliDejaInstallee()) bandeauInstallation.classList.remove('cache');
+  }, 1200);
 }
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
@@ -390,15 +406,22 @@ window.addEventListener('beforeinstallprompt', (evenement) => {
 });
 
 boutonInstaller.addEventListener('click', async () => {
-  if (!evenementInstallDiffere) return;
-  bandeauInstallation.classList.add('cache');
-  evenementInstallDiffere.prompt();
-  await evenementInstallDiffere.userChoice;
-  evenementInstallDiffere = null;
+  if (evenementInstallDiffere) {
+    bandeauInstallation.classList.add('cache');
+    evenementInstallDiffere.prompt();
+    await evenementInstallDiffere.userChoice;
+    evenementInstallDiffere = null;
+  } else {
+    // Le navigateur n'a pas proposé d'installation automatique : on montre la marche à suivre.
+    texteInstallation.textContent = TEXTE_INSTALLATION_MANUELLE;
+    boutonInstaller.classList.add('cache');
+  }
 });
 
 boutonInstallerPlusTard.addEventListener('click', () => {
   bandeauInstallation.classList.add('cache');
+  texteInstallation.textContent = TEXTE_INSTALLATION_DEFAUT;
+  boutonInstaller.classList.remove('cache');
 });
 
 window.addEventListener('appinstalled', () => {
