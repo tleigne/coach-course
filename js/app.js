@@ -368,4 +368,42 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ===================== INSTALLATION SUR L'ÉCRAN D'ACCUEIL =====================
+// Affiche un bouton "Installer l'application" dès que le navigateur juge l'appli
+// installable, pour éviter d'avoir à chercher l'option dans les menus du téléphone.
+
+let evenementInstallDiffere = null;
+const bandeauInstallation = document.getElementById('bandeau-installation');
+const boutonInstaller = document.getElementById('bouton-installer');
+const boutonInstallerPlusTard = document.getElementById('bouton-installer-plus-tard');
+
+function appliDejaInstallee() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', (evenement) => {
+  evenement.preventDefault();
+  evenementInstallDiffere = evenement;
+  if (!appliDejaInstallee()) {
+    bandeauInstallation.classList.remove('cache');
+  }
+});
+
+boutonInstaller.addEventListener('click', async () => {
+  if (!evenementInstallDiffere) return;
+  bandeauInstallation.classList.add('cache');
+  evenementInstallDiffere.prompt();
+  await evenementInstallDiffere.userChoice;
+  evenementInstallDiffere = null;
+});
+
+boutonInstallerPlusTard.addEventListener('click', () => {
+  bandeauInstallation.classList.add('cache');
+});
+
+window.addEventListener('appinstalled', () => {
+  bandeauInstallation.classList.add('cache');
+  evenementInstallDiffere = null;
+});
+
 afficherEcran('import');

@@ -31,6 +31,39 @@ html, body {
   min-height: 100vh;
 }
 
+.bandeau-installation {
+  background: var(--fond-carte);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bandeau-installation-boutons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bandeau-installation-boutons .bouton-principal {
+  flex: 1;
+  padding: 12px;
+  font-size: 1rem;
+}
+
+.bouton-texte {
+  background: none;
+  border: none;
+  color: var(--texte-attenue);
+  font-size: 0.95rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+
 .ecran {
   display: none;
   flex-direction: column;
