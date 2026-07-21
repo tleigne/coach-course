@@ -1,36 +1,36 @@
 # Roadmap — après le MVP
 
 ## Déjà identifié (V2/V3)
-- Connexion Strava : import automatique des parcours et de l'historique de
-  performances.
-- Playlist adaptative (Spotify) : la musique s'adapte au profil du parcours et
-  à l'intensité de l'effort.
 - Audio en arrière-plan, écran éteint, téléphone en poche.
 - Ravitaillements et points clés géolocalisés sur le parcours.
 
-## En discussion : coaching prédictif (avance/retard → conseil actionnable)
+## Fait — coaching prédictif basé sur Strava (2026-07-21)
 
-Idée : quand l'appli annonce une avance ou un retard, elle doit pouvoir dire
-si c'est *rattrapable ou non* compte tenu de la suite du parcours (montées
-restantes, distance restante) et des capacités réelles du coureur — pas
-juste annoncer un écart brut.
+Le coach vocal sait maintenant dire, en cas de retard, si c'est *rattrapable
+ou non* compte tenu du dénivelé restant sur le parcours et du profil de
+performance réel de Thibault (voir [`js/profil.js`](js/profil.js), calculé à
+partir de ses zones d'allure Strava et de son ratio vitesse/dénivelé observé
+sur des sorties en montagne). Pas d'intégration Strava en direct dans
+l'appli (pas d'OAuth ni de backend) : les données ont été récupérées une
+fois via un accès Strava disponible côté outillage de développement, puis
+figées dans `js/profil.js`. À recalculer manuellement si le profil de forme
+évolue nettement.
 
-Ça suppose deux nouvelles sources de données :
-1. **Des repères de performance passée** (ex. allure soutenable sur plat, sur
-   montée, temps de récupération) — soit saisis manuellement par
-   l'utilisateur, soit importés automatiquement depuis Strava.
-2. **Une analyse du profil restant du parcours** (déjà en partie disponible
-   via `js/gpx.js`, à étendre : cumul de D+ restant, découpage par segments).
+## En réflexion : musique pendant la course (Spotify)
 
-Deux approches possibles, avec un arbitrage à trancher avant de coder :
-- **Saisie manuelle simple** (ex. « mon allure confortable » + « mon allure en
-  côte ») : rapide à livrer, ne dépend d'aucun compte externe, mais moins
-  précis et demande un effort de saisie à l'utilisateur.
-- **Connexion Strava (OAuth)** : plus précis (historique réel de sorties),
-  mais ajoute une dépendance externe (inscription à l'API Strava, flux
-  d'autorisation, gestion des tokens, temps de validation) — nettement plus
-  lourd à mettre en place que le reste du MVP.
+Deux niveaux très différents, à ne pas confondre :
 
-Recommandation : démarrer par la saisie manuelle (quelques champs simples) pour
-livrer vite un coaching plus intelligent, et n'ajouter Strava qu'ensuite si le
-besoin de précision le justifie.
+1. **Une playlist unique et bien choisie** (à partir des titres likés de
+   l'utilisateur, style/BPM adapté à la course à pied), que le coureur lance
+   lui-même sur son téléphone à côté de l'appli. Réalisable rapidement (un
+   accès Spotify est disponible côté outillage de développement), mais
+   nécessite une confirmation explicite avant de créer quoi que ce soit sur
+   le compte Spotify de l'utilisateur. **Proposé le 2026-07-21, décliné pour
+   l'instant** ("pas maintenant").
+2. **Musique adaptative en temps réel pendant la course**, qui changerait de
+   morceau selon le segment du parcours ou l'allure en cours. Ça suppose
+   d'intégrer l'authentification Spotify (OAuth) et le SDK de lecture Spotify
+   *dans l'appli elle-même*, avec compte Premium requis côté utilisateur —
+   une brique technique à part entière, largement plus lourde que tout ce
+   qui a été construit jusqu'ici. À traiter comme un projet séparé si le
+   besoin se confirme, pas comme un ajout incrémental.
