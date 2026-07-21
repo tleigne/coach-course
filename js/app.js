@@ -389,12 +389,18 @@ function appliDejaInstallee() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
+window.__debugInstall = { avantSetTimeout: true };
 if (!appliDejaInstallee()) {
   // Laisse une chance à beforeinstallprompt d'arriver avant d'afficher le bandeau,
   // pour privilégier le bouton natif quand il est disponible.
   setTimeout(() => {
+    window.__debugInstall.callbackExecute = true;
+    window.__debugInstall.dejaInstalleeAuMomentDuCallback = appliDejaInstallee();
     if (!appliDejaInstallee()) bandeauInstallation.classList.remove('cache');
+    window.__debugInstall.cacheApres = bandeauInstallation.classList.contains('cache');
   }, 1200);
+} else {
+  window.__debugInstall.dejaInstalleeAuDepart = true;
 }
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
