@@ -92,3 +92,14 @@ export function phraseAvanceRetard(ecartSec) {
 export function phraseRapportAllure(allureTexte) {
   return `Ton allure actuelle est de ${allureTexte}.`;
 }
+
+/** Complète l'annonce d'un retard par une estimation de faisabilité,
+ * basée sur le profil de performance et la suite du parcours. */
+export function phraseFaisabilite(niveau) {
+  if (niveau === 'large') return 'Vu la suite du parcours, tu as largement de quoi rattraper ça.';
+  if (niveau === 'jouable') return "C'est jouable si tu restes régulier, sans t'affoler.";
+  if (niveau === 'difficile') {
+    return 'Ce sera difficile à rattraper vu la suite du parcours : mieux vaut assurer une allure stable plutôt que de vouloir tout rattraper d\'un coup.';
+  }
+  return '';
+}

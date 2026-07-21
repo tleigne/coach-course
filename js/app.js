@@ -1,5 +1,5 @@
 // Orchestration de l'appli : écrans, état de la course, décisions du coaching vocal.
-import { parserGPX, chercherMonteeAVenir } from './gpx.js';
+import { parserGPX, chercherMonteeAVenir, denivelePositifRestant } from './gpx.js';
 import { SuiviGPS } from './geo.js';
 import {
   CoachVocal,
@@ -10,8 +10,10 @@ import {
   phraseFin,
   phraseAvanceRetard,
   phraseRapportAllure,
+  phraseFaisabilite,
 } from './coach.js';
 import { formatDistance, formatDuree, formatAllure, formatEcart, parseHMS, parseAllure } from './utils.js';
+import { evaluerFaisabilite } from './profil.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
 const INTERVALLE_RAPPORT_MS = 150000; // rapport d'allure / avance-retard : ~2,5 min
@@ -237,6 +239,21 @@ function calculerEcartSec() {
   return tempsPrevu - etat.course.tempsEcouleSec;
 }
 
+/** N'a de sens qu'en cas de retard réel : est-ce rattrapable vu la suite du
+ * parcours (dénivelé restant) et le profil de performance du coureur ? */
+function calculerFaisabilite(ecartSec) {
+  if (ecartSec === null || ecartSec >= -20 || !etat.parcours || !etat.objectif.paceCibleSecParKm) return null;
+  const distanceRestanteKm = etat.parcours.distanceTotale - etat.course.distanceParcourueKm;
+  if (distanceRestanteKm <= 0.05) return null;
+
+  const tempsCibleTotalSec = etat.objectif.paceCibleSecParKm * etat.parcours.distanceTotale;
+  const tempsRestantObjectifSec = tempsCibleTotalSec - etat.course.tempsEcouleSec;
+  const allureNecessaireSecParKm = tempsRestantObjectifSec / distanceRestanteKm;
+  const deniveleRestantM = denivelePositifRestant(etat.parcours, etat.course.distanceParcourueKm);
+
+  return evaluerFaisabilite(allureNecessaireSecParKm, deniveleRestantM, distanceRestanteKm);
+}
+
 function renderCourse() {
   elCourseDistance.textContent = formatDistance(etat.course.distanceParcourueKm);
   elCourseAllure.textContent = formatAllure(etat.course.allureSecParKm);
@@ -265,7 +282,11 @@ function tickCoaching() {
   const objectifChiffre = etat.objectif.type !== 'effort';
 
   if (objectifChiffre && maintenant - c.rapport > INTERVALLE_RAPPORT_MS) {
-    coach.parler(phraseAvanceRetard(calculerEcartSec()));
+    const ecart = calculerEcartSec();
+    let message = phraseAvanceRetard(ecart);
+    const niveauFaisabilite = calculerFaisabilite(ecart);
+    if (niveauFaisabilite) message += ' ' + phraseFaisabilite(niveauFaisabilite);
+    coach.parler(message);
     c.rapport = maintenant;
     return;
   }

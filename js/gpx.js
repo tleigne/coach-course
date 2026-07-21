@@ -74,6 +74,23 @@ export function parserGPX(texteXML) {
 }
 
 /**
+ * Somme le dénivelé positif restant entre `distanceActuelleKm` et la fin du
+ * parcours. Utilisé pour estimer si un objectif de temps reste tenable.
+ */
+export function denivelePositifRestant(parcours, distanceActuelleKm) {
+  const { points } = parcours;
+  let iDepart = points.findIndex((p) => p.distanceCumulee >= distanceActuelleKm);
+  if (iDepart === -1) return 0;
+
+  let denivele = 0;
+  for (let i = iDepart; i < points.length - 1; i++) {
+    const delta = points[i + 1].ele - points[i].ele;
+    if (delta > 0) denivele += delta;
+  }
+  return Math.round(denivele);
+}
+
+/**
  * Cherche s'il y a une montée significative dans les `distanceLookaheadKm`
  * prochains kilomètres à partir de `distanceActuelleKm`. Retourne
  * { distanceAvantKm, deniveleM } ou null si rien de notable.
