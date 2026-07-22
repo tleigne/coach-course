@@ -23,6 +23,30 @@ ensemble avant de coder :
   l'install Chrome fonctionne bien maintenant avant d'investir dans le Play
   Store (coût + délai de revue).
 
+### 1bis. Sécurisation « by design » avant soumission au Play Store
+Demande explicite de Thibault (22/07) : traiter la sécurité du code et de
+l'appli comme un prérequis à la publication, pas comme un rattrapage
+après coup. À couvrir avant toute soumission :
+- **Politique de confidentialité** (obligatoire dès qu'une appli demande la
+  position GPS) — préciser que la position n'est utilisée que localement,
+  jamais transmise ni stockée ailleurs que sur l'appareil.
+- **Formulaire "Data safety" du Play Console** : déclarer précisément les
+  données collectées (position GPS, en local uniquement) et confirmer
+  qu'aucune donnée n'est partagée avec un tiers.
+- **Aucun secret/clé API en dur dans le code client** — déjà vrai
+  aujourd'hui (aucun backend, aucune clé), à vérifier à nouveau si Strava/
+  Google Maps/Spotify sont un jour intégrés directement dans l'appli.
+- **Échappement systématique de tout contenu utilisateur avant insertion
+  HTML** (nom de parcours importé, etc.) — déjà fait pour l'historique
+  (`echapperHTML` dans `js/utils.js`), à systématiser sur tout nouvel écran.
+- **HTTPS strict** (déjà le cas via GitHub Pages/TWA) et permissions
+  minimales (seule la géolocalisation est demandée, rien d'autre).
+- **Aucune dépendance externe** (zéro librairie tierce à ce jour) : réduit
+  la surface de risque de supply-chain, à essayer de préserver.
+- Revoir le `manifest.json` et le TWA généré (PWABuilder) pour le ciblage
+  Android (targetSdkVersion) exigé par Google Play au moment de la
+  soumission (les exigences évoluent, à vérifier à ce moment-là).
+
 ### 2. Tracé GPX visible dans l'interface
 Actuellement seul le profil d'altitude (élévation) est affiché. Ajouter une
 vue du tracé en 2D (forme du parcours vu du dessus), en réutilisant l'esprit

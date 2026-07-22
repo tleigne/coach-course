@@ -1,6 +1,6 @@
 // Service worker : mise en cache des fichiers de l'appli pour un fonctionnement hors-ligne.
 // Change ce numéro de version à chaque mise à jour du code pour forcer le rafraîchissement du cache.
-const CACHE_VERSION = 'coach-course-v4';
+const CACHE_VERSION = 'coach-course-v5';
 
 const FICHIERS_A_METTRE_EN_CACHE = [
   './',
@@ -12,6 +12,10 @@ const FICHIERS_A_METTRE_EN_CACHE = [
   './js/geo.js',
   './js/coach.js',
   './js/utils.js',
+  './js/profil.js',
+  './js/historique.js',
+  './js/kml.js',
+  './js/export.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
