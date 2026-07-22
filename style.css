@@ -130,6 +130,17 @@ button:disabled {
   margin: 0;
 }
 
+.pied-page {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.8rem;
+}
+
+.pied-page a {
+  color: var(--texte-attenue);
+  text-decoration: underline;
+}
+
 h1 {
   font-size: 1.8rem;
   margin: 0 0 4px;
