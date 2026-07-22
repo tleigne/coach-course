@@ -824,4 +824,11 @@ window.addEventListener('appinstalled', () => {
   evenementInstallDiffere = null;
 });
 
-afficherEcran('import');
+// Gère les raccourcis d'application (appui long sur l'icône) définis dans manifest.json.
+const actionDemandee = new URLSearchParams(window.location.search).get('action');
+if (actionDemandee === 'historique') {
+  afficherHistorique();
+  afficherEcran('historique');
+} else {
+  afficherEcran('import');
+}

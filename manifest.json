@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Coach Course",
   "short_name": "CoachCourse",
   "description": "Coaching vocal en français pour tes sorties running, à partir d'un parcours GPX.",
@@ -9,6 +10,17 @@
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
   "lang": "fr",
+  "dir": "ltr",
+  "categories": ["sports", "health", "fitness"],
+  "shortcuts": [
+    {
+      "name": "Voir mes courses précédentes",
+      "short_name": "Historique",
+      "description": "Consulter l'historique de mes courses",
+      "url": "./index.html?action=historique",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
