@@ -1,5 +1,53 @@
 # Roadmap — après le MVP
 
+## En attente d'arbitrage : comptes utilisateurs (authentification + stockage des données)
+
+Demande de Thibault (22/07) : permettre à chaque utilisateur de créer un
+compte pour retrouver toutes ses données (historique de courses, profil...),
+avec une sécurité et une conformité réglementaire (RGPD) traitées « dans les
+règles de l'art », en s'appuyant sur des briques open source existantes
+plutôt que de tout réinventer.
+
+**Ce que ça implique** : l'appli n'a aujourd'hui aucun serveur (tout tourne
+dans le navigateur, l'historique reste en `localStorage` sur l'appareil).
+Ajouter des comptes veut dire ajouter un vrai backend (base de données +
+authentification) — un changement d'architecture, pas un ajout de
+fonctionnalité comme les précédents.
+
+**Recommandation après recherche : [Supabase](https://supabase.com/)** —
+open source, combine base de données Postgres + authentification (module
+GoTrue) en un seul service, pensé précisément pour ce cas (appli front-end
+qui a besoin d'un backend sans en écrire un de zéro). Deux façons de le
+déployer, avec des compromis différents :
+- **Hébergé par Supabase, région UE (Francfort)** : rapide à mettre en
+  place, offre gratuite existante, contrat de traitement des données (DPA)
+  fourni. Limite à documenter dans la politique de confidentialité :
+  Supabase reste une société américaine, donc soumise au *Cloud Act* même en
+  hébergeant en UE.
+- **Auto-hébergé** (le code est 100 % open source) : souveraineté totale des
+  données, mais toute la responsabilité de conformité et de sécurité du
+  serveur repose alors sur nous, sans filet.
+
+**Alternatives open source considérées** (authentification seule, sans
+stockage intégré) : SuperTokens, Authentik, Keycloak, Hanko. Plus lourdes à
+assembler ici, car il faudrait ajouter une base de données séparée en plus —
+Supabase reste le choix le plus direct pour ce projet.
+
+**Ce qui bloque un développement solo dans l'immédiat :**
+1. Création d'un compte Supabase (ou location d'un serveur pour
+   l'auto-hébergement) — à faire par Thibault, impossible de créer un compte
+   à sa place.
+2. Conformité RGPD réelle, au-delà du code : politique de confidentialité à
+   mettre à jour, mécanisme d'export/suppression des données par
+   l'utilisateur (droits RGPD), décision sur la durée de conservation.
+3. Décision structurante à trancher ensemble : hébergé vs auto-hébergé
+   (coût, responsabilité, simplicité).
+
+**Prochaine étape une fois la décision prise** : créer le
+compte/projet Supabase, ajouter un écran de connexion/inscription, migrer
+`js/historique.js` pour lire/écrire vers Supabase au lieu de `localStorage`
+(avec repli local si hors-ligne pendant une course).
+
 ## En attente d'arbitrage : Google Play Store
 
 Thibault veut pouvoir packager l'appli pour le Play Store (l'installation
