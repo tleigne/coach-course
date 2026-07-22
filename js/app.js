@@ -26,7 +26,7 @@ import {
   distanceHaversine,
 } from './utils.js';
 import { evaluerFaisabilite } from './profil.js';
-import { sauvegarderCourse, listerCourses } from './historique.js';
+import { sauvegarderCourse, listerCourses, viderHistorique } from './historique.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
@@ -249,6 +249,10 @@ document.getElementById('bouton-voir-historique').addEventListener('click', () =
 });
 
 // ===================== ÉCRAN 2 : OBJECTIF =====================
+
+document.getElementById('bouton-retour-import').addEventListener('click', () => {
+  afficherEcran('import');
+});
 
 const radiosObjectif = document.querySelectorAll('input[name="type-objectif"]');
 const blocs = {
@@ -592,6 +596,12 @@ document.getElementById('bouton-nouvelle-course').addEventListener('click', () =
 
 document.getElementById('bouton-retour-historique').addEventListener('click', () => {
   afficherEcran('import');
+});
+
+document.getElementById('bouton-vider-historique').addEventListener('click', () => {
+  if (!confirm('Supprimer définitivement tout ton historique de courses ?')) return;
+  viderHistorique();
+  afficherHistorique();
 });
 
 function afficherHistorique() {

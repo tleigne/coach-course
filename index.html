@@ -24,6 +24,9 @@
 
   <!-- ÉCRAN 1 : IMPORT DU PARCOURS -->
   <section id="ecran-import" class="ecran actif">
+    <div class="entete-etape">
+      <span class="etape-indicateur">Étape 1 sur 3</span>
+    </div>
     <h1>Coach Course</h1>
     <p class="sous-titre">Importe ton parcours pour commencer.</p>
 
@@ -50,6 +53,10 @@
 
   <!-- ÉCRAN 2 : CHOIX DE L'OBJECTIF -->
   <section id="ecran-objectif" class="ecran">
+    <div class="entete-etape">
+      <button id="bouton-retour-import" class="bouton-retour-ecran" aria-label="Retour">←</button>
+      <span class="etape-indicateur">Étape 2 sur 3</span>
+    </div>
     <h1>Ton objectif</h1>
 
     <label class="choix-objectif">
@@ -88,6 +95,10 @@
 
   <!-- ÉCRAN 3 : COURSE EN COURS -->
   <section id="ecran-course" class="ecran">
+    <div class="entete-etape">
+      <span class="etape-indicateur">Étape 3 sur 3 · en course</span>
+    </div>
+    <p class="rappel-ecran-allume">Garde l'écran allumé pendant la course pour ne pas interrompre le coaching (si tu verrouilles le téléphone, l'appli se met en pause).</p>
     <div class="gros-chiffre">
       <span id="course-distance">0,00 km</span>
       <span class="etiquette">distance</span>
@@ -137,6 +148,7 @@
   <section id="ecran-historique" class="ecran">
     <h1>Mes courses</h1>
     <div id="liste-historique"></div>
+    <button id="bouton-vider-historique" class="bouton-texte">Vider l'historique</button>
     <button id="bouton-retour-historique" class="bouton-secondaire">Retour</button>
   </section>
 
