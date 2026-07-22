@@ -37,6 +37,26 @@ export function formatDuree(sec) {
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
 }
 
+/** Formate une durée en secondes pour l'énoncer à voix haute, de façon
+ * naturelle : "1 heure, 15 minutes et 20 secondes", ou juste "5 minutes"
+ * si les heures/secondes valent zéro. Distinct de formatDuree (affichage
+ * visuel "h:mm:ss"), car lire "35:20" tel quel prête à confusion pour une
+ * synthèse vocale (risque de l'interpréter comme une heure de la journée). */
+export function formatDureeParlee(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+
+  const parties = [];
+  if (h > 0) parties.push(`${h} heure${h > 1 ? 's' : ''}`);
+  if (m > 0) parties.push(`${m} minute${m > 1 ? 's' : ''}`);
+  if (s > 0 || parties.length === 0) parties.push(`${s} seconde${s > 1 ? 's' : ''}`);
+
+  if (parties.length === 1) return parties[0];
+  return parties.slice(0, -1).join(', ') + ' et ' + parties[parties.length - 1];
+}
+
 /** Formate une allure (secondes par km) en "m:ss /km". */
 export function formatAllure(secParKm) {
   if (!isFinite(secParKm) || secParKm <= 0) return '--:-- /km';

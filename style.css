@@ -1,4 +1,7 @@
-/* Thème sombre, gros texte lisible en extérieur / plein soleil / en courant. */
+/* Thèmes sombre (par défaut) et clair, gros texte lisible en extérieur /
+   plein soleil / en courant. Le thème peut être forcé via l'attribut
+   data-theme sur <html> ("sombre" ou "clair"), ou laissé au choix du
+   système (aucun attribut : voir la media query plus bas). */
 
 :root {
   --fond: #0d1117;
@@ -9,6 +12,30 @@
   --texte-attenue: #9aa4af;
   --erreur: #ff5c5c;
   --bordure: #2a323c;
+}
+
+:root[data-theme='clair'] {
+  --fond: #f5f6f8;
+  --fond-carte: #ffffff;
+  --accent: #e56a00;
+  --accent-vert: #1e8e3e;
+  --texte: #14181f;
+  --texte-attenue: #5b6472;
+  --erreur: #c8322a;
+  --bordure: #d8dde3;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --fond: #f5f6f8;
+    --fond-carte: #ffffff;
+    --accent: #e56a00;
+    --accent-vert: #1e8e3e;
+    --texte: #14181f;
+    --texte-attenue: #5b6472;
+    --erreur: #c8322a;
+    --bordure: #d8dde3;
+  }
 }
 
 * {
@@ -411,6 +438,77 @@ h1 {
 
 .info-gps {
   text-align: center;
+}
+
+.boutons-secondaires-import {
+  display: flex;
+  justify-content: space-between;
+}
+
+.titre-section-reglages {
+  font-size: 1rem;
+  margin: 12px 0 4px;
+  color: var(--texte-attenue);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.choix-theme {
+  display: flex;
+  gap: 8px;
+}
+
+.bouton-choix {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--bordure);
+  background: transparent;
+  color: var(--texte);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.bouton-choix.selectionne {
+  border-color: var(--accent);
+  background: rgba(255, 122, 26, 0.12);
+  font-weight: 600;
+}
+
+.voix-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.voix-item.selectionne {
+  border-color: var(--accent);
+}
+
+.voix-item-nom {
+  font-size: 0.95rem;
+}
+
+.voix-item-boutons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.voix-item-boutons button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--bordure);
+  background: transparent;
+  color: var(--texte);
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
 .boutons-course {

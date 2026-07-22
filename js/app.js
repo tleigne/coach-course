@@ -14,6 +14,7 @@ import {
   phraseAvanceRetard,
   phraseRapportAllure,
   phraseFaisabilite,
+  deviterGenreVoix,
 } from './coach.js';
 import {
   formatDistance,
@@ -109,6 +110,7 @@ const ecrans = {
   course: document.getElementById('ecran-course'),
   resume: document.getElementById('ecran-resume'),
   historique: document.getElementById('ecran-historique'),
+  reglages: document.getElementById('ecran-reglages'),
 };
 
 function afficherEcran(nom) {
@@ -148,7 +150,7 @@ inputFichier.addEventListener('change', async () => {
     etat.parcours = parcours;
     afficherResumeParcours(parcours);
   } catch (e) {
-    zoneErreurImport.textContent = e.message || "Impossible de lire ce fichier GPX.";
+    zoneErreurImport.textContent = e.message || "Impossible de lire ce fichier de parcours.";
   }
 });
 
@@ -248,6 +250,11 @@ document.getElementById('bouton-voir-historique').addEventListener('click', () =
   afficherEcran('historique');
 });
 
+document.getElementById('bouton-voir-reglages').addEventListener('click', () => {
+  afficherReglages();
+  afficherEcran('reglages');
+});
+
 // ===================== ÉCRAN 2 : OBJECTIF =====================
 
 document.getElementById('bouton-retour-import').addEventListener('click', () => {
@@ -309,6 +316,7 @@ const elCourseGpsEtat = document.getElementById('course-gps-etat');
 const boutonPause = document.getElementById('bouton-pause');
 
 function demarrerCourse() {
+  if (etat.course.enCours) return; // évite un double-démarrage (double-clic / double-tap)
   pointsInteretAnnonces = new Set();
   etat.course = {
     enCours: true,
@@ -545,11 +553,12 @@ document.getElementById('bouton-terminer').addEventListener('click', () => {
 });
 
 function terminerCourse() {
+  if (!etat.course.enCours) return; // évite une double-terminaison (double-clic / double-tap)
+  etat.course.enCours = false;
   clearInterval(idIntervalleChrono);
   clearInterval(idIntervalleCoaching);
   derniereTraceEnregistree = tracker ? tracker.obtenirTrace() : [];
   if (tracker) tracker.arreter();
-  etat.course.enCours = false;
   relacherVerrouEcran();
 
   const distanceFinale = etat.course.distanceParcourueKm;
@@ -563,7 +572,7 @@ function terminerCourse() {
   const boutonTelecharger = document.getElementById('bouton-telecharger-gpx');
   boutonTelecharger.disabled = derniereTraceEnregistree.length < 2;
 
-  coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), dureeTexte), { prioritaire: true });
+  coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), etat.course.tempsEcouleSec), { prioritaire: true });
 
   sauvegarderCourse({
     nomParcours: etat.parcours ? etat.parcours.nom : 'Parcours',
@@ -634,6 +643,100 @@ function afficherHistorique() {
     .join('');
 }
 
+// ===================== ÉCRAN 6 : RÉGLAGES =====================
+
+const CLE_THEME = 'coach-course-theme'; // 'sombre' | 'clair' | 'systeme'
+
+function appliquerTheme(theme) {
+  if (theme === 'systeme') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  const estSombre =
+    theme === 'sombre' ||
+    (theme === 'systeme' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) metaThemeColor.setAttribute('content', estSombre ? '#0d1117' : '#f5f6f8');
+
+  try {
+    localStorage.setItem(CLE_THEME, theme);
+  } catch (e) {
+    // Stockage indisponible : le thème reste actif pour cette session seulement.
+  }
+}
+
+function themePrefereActuel() {
+  try {
+    return localStorage.getItem(CLE_THEME) || 'sombre';
+  } catch (e) {
+    return 'sombre';
+  }
+}
+
+document.querySelectorAll('#choix-theme .bouton-choix').forEach((bouton) => {
+  bouton.addEventListener('click', () => {
+    appliquerTheme(bouton.dataset.themeValeur);
+    afficherEtatTheme();
+  });
+});
+
+function afficherEtatTheme() {
+  const themeActuel = themePrefereActuel();
+  document.querySelectorAll('#choix-theme .bouton-choix').forEach((bouton) => {
+    bouton.classList.toggle('selectionne', bouton.dataset.themeValeur === themeActuel);
+  });
+}
+
+document.getElementById('bouton-retour-reglages').addEventListener('click', () => {
+  afficherEcran('import');
+});
+
+function afficherReglages() {
+  afficherEtatTheme();
+  afficherListeVoix();
+}
+
+function afficherListeVoix() {
+  const conteneur = document.getElementById('liste-voix');
+  const voix = coach.listerVoixDisponibles();
+
+  if (voix.length === 0) {
+    conteneur.innerHTML = '<p class="info">Aucune voix française détectée pour l\'instant. Réessaie dans quelques secondes.</p>';
+    return;
+  }
+
+  const voixActuelle = coach.voixActuelle();
+
+  conteneur.innerHTML = voix
+    .map((v) => {
+      const genre = deviterGenreVoix(v.name);
+      const etiquetteGenre = genre === 'feminine' ? ' (voix féminine)' : genre === 'masculine' ? ' (voix masculine)' : '';
+      const estActive = voixActuelle && voixActuelle.name === v.name;
+      return `
+        <div class="voix-item${estActive ? ' selectionne' : ''}">
+          <span class="voix-item-nom">${echapperHTML(v.name)}${etiquetteGenre}</span>
+          <div class="voix-item-boutons">
+            <button data-action="tester" data-voix="${echapperHTML(v.name)}">Tester</button>
+            <button data-action="choisir" data-voix="${echapperHTML(v.name)}">${estActive ? 'Choisie' : 'Choisir'}</button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  conteneur.querySelectorAll('button[data-action="tester"]').forEach((bouton) => {
+    bouton.addEventListener('click', () => coach.previsualiserVoix(bouton.dataset.voix));
+  });
+  conteneur.querySelectorAll('button[data-action="choisir"]').forEach((bouton) => {
+    bouton.addEventListener('click', () => {
+      coach.definirVoixPreferee(bouton.dataset.voix);
+      afficherListeVoix();
+    });
+  });
+}
+
 // ===================== SERVICE WORKER =====================
 
 if ('serviceWorker' in navigator) {
@@ -686,6 +789,8 @@ if (!appliDejaInstallee()) {
     }, 1200);
   }
 }
+
+appliquerTheme(themePrefereActuel());
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
   evenement.preventDefault();

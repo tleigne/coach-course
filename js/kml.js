@@ -66,11 +66,8 @@ export function parserKML(texteXML) {
     const [lon, lat] = matchCoord[1].trim().split(',').map(Number);
     if (isNaN(lat) || isNaN(lon)) continue;
     const matchNomPoint = bloc.match(/<name>([\s\S]*?)<\/name>/i);
-    pointsInteret.push({
-      nom: matchNomPoint ? matchNomPoint[1].replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim() : 'Point',
-      lat,
-      lon,
-    });
+    const nomPoint = matchNomPoint && matchNomPoint[1].replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim();
+    pointsInteret.push({ nom: nomPoint || 'Point', lat, lon });
   }
 
   return construireParcours(nom, brut, pointsInteret);

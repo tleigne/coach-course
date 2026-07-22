@@ -9,6 +9,15 @@
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./style.css" />
+<script>
+  // Applique le thème choisi avant le premier affichage, pour éviter un flash du mauvais thème.
+  try {
+    var themePrefere = localStorage.getItem('coach-course-theme');
+    if (themePrefere && themePrefere !== 'systeme') {
+      document.documentElement.setAttribute('data-theme', themePrefere);
+    }
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -34,7 +43,10 @@
     <input type="file" id="fichier-gpx" hidden />
     <p class="info">Formats acceptés : GPX, KML, KMZ (export Google Maps / My Maps).</p>
 
-    <button id="bouton-voir-historique" class="bouton-texte">Voir mes courses précédentes</button>
+    <div class="boutons-secondaires-import">
+      <button id="bouton-voir-historique" class="bouton-texte">Voir mes courses précédentes</button>
+      <button id="bouton-voir-reglages" class="bouton-texte">Réglages</button>
+    </div>
 
     <p id="erreur-import" class="erreur"></p>
 
@@ -156,6 +168,24 @@
     <div id="liste-historique"></div>
     <button id="bouton-vider-historique" class="bouton-texte">Vider l'historique</button>
     <button id="bouton-retour-historique" class="bouton-secondaire">Retour</button>
+  </section>
+
+  <!-- ÉCRAN 6 : RÉGLAGES -->
+  <section id="ecran-reglages" class="ecran">
+    <h1>Réglages</h1>
+
+    <h2 class="titre-section-reglages">Thème</h2>
+    <div class="choix-theme" id="choix-theme">
+      <button class="bouton-choix" data-theme-valeur="sombre">Sombre</button>
+      <button class="bouton-choix" data-theme-valeur="clair">Clair</button>
+      <button class="bouton-choix" data-theme-valeur="systeme">Système</button>
+    </div>
+
+    <h2 class="titre-section-reglages">Voix du coach</h2>
+    <p class="info">Les voix disponibles dépendent de ton téléphone. Appuie sur « Tester » pour les écouter avant de choisir.</p>
+    <div id="liste-voix"></div>
+
+    <button id="bouton-retour-reglages" class="bouton-secondaire">Retour</button>
   </section>
 
 </main>

@@ -1,8 +1,29 @@
 // Coaching vocal : synthèse vocale en français (Web Speech API) + banques de phrases.
+import { formatDureeParlee } from './utils.js';
+
+const CLE_VOIX_PREFEREE = 'coach-course-voix-preferee';
+
+// Fragments de noms couramment utilisés par les moteurs de synthèse vocale
+// pour indiquer le genre de la voix. Purement indicatif (l'API Web Speech ne
+// fournit pas de champ "genre" standard) : sert seulement à étiqueter les
+// voix dans l'écran de réglages, jamais à filtrer ou décider à la place de
+// l'utilisateur — il choisit toujours en écoutant un aperçu.
+const INDICES_VOIX_FEMININE = ['hortense', 'amelie', 'amélie', 'audrey', 'julie', 'marie', 'virginie', 'celine', 'céline', 'chantal', 'female', 'femme'];
+const INDICES_VOIX_MASCULINE = ['paul', 'thomas', 'nicolas', 'daniel', 'henri', 'bruno', 'male', 'homme'];
+
+/** Devine (au mieux) le genre d'une voix à partir de son nom. Retourne
+ * 'feminine', 'masculine' ou null si indéterminé. */
+export function deviterGenreVoix(nomVoix) {
+  const nom = (nomVoix || '').toLowerCase();
+  if (INDICES_VOIX_FEMININE.some((mot) => nom.includes(mot))) return 'feminine';
+  if (INDICES_VOIX_MASCULINE.some((mot) => nom.includes(mot))) return 'masculine';
+  return null;
+}
 
 export class CoachVocal {
   constructor() {
     this.voixFR = null;
+    this.voixDisponibles = [];
     this.pret = false;
     if ('speechSynthesis' in window) {
       this._chargerVoix();
@@ -11,9 +32,52 @@ export class CoachVocal {
   }
 
   _chargerVoix() {
-    const voix = speechSynthesis.getVoices();
-    this.voixFR = voix.find((v) => v.lang && v.lang.toLowerCase().startsWith('fr')) || null;
+    const toutesVoix = speechSynthesis.getVoices();
+    this.voixDisponibles = toutesVoix.filter((v) => v.lang && v.lang.toLowerCase().startsWith('fr'));
+
+    let nomPrefere = null;
+    try {
+      nomPrefere = localStorage.getItem(CLE_VOIX_PREFEREE);
+    } catch (e) {
+      // Stockage indisponible : on garde le choix par défaut.
+    }
+    const voixPreferee = nomPrefere && this.voixDisponibles.find((v) => v.name === nomPrefere);
+    this.voixFR = voixPreferee || this.voixDisponibles[0] || null;
     this.pret = true;
+  }
+
+  /** Voix françaises détectées sur cet appareil (peut être vide si la page
+   * vient de charger et que le navigateur n'a pas encore annoncé ses voix). */
+  listerVoixDisponibles() {
+    return this.voixDisponibles;
+  }
+
+  voixActuelle() {
+    return this.voixFR;
+  }
+
+  /** Change la voix utilisée pour le coaching, et retient ce choix. */
+  definirVoixPreferee(nomVoix) {
+    const voix = this.voixDisponibles.find((v) => v.name === nomVoix);
+    if (!voix) return;
+    this.voixFR = voix;
+    try {
+      localStorage.setItem(CLE_VOIX_PREFEREE, nomVoix);
+    } catch (e) {
+      // Stockage indisponible : le choix reste actif pour cette session seulement.
+    }
+  }
+
+  /** Fait entendre un exemple avec une voix donnée, sans changer la voix
+   * active du coaching (pour comparer avant de choisir). */
+  previsualiserVoix(nomVoix, texte = 'Bonjour, je suis ton coach vocal pour cette course.') {
+    if (!this.disponible()) return;
+    const voix = this.voixDisponibles.find((v) => v.name === nomVoix);
+    speechSynthesis.cancel();
+    const enonce = new SpeechSynthesisUtterance(texte);
+    enonce.lang = 'fr-FR';
+    if (voix) enonce.voice = voix;
+    speechSynthesis.speak(enonce);
   }
 
   disponible() {
@@ -97,8 +161,8 @@ export function phraseDepart() {
   return "C'est parti, bonne course !";
 }
 
-export function phraseFin(distanceKm, dureeTexte) {
-  return `Course terminée. ${distanceKm} kilomètres parcourus en ${dureeTexte}. Bravo !`;
+export function phraseFin(distanceKm, dureeSec) {
+  return `Course terminée. ${distanceKm} kilomètres parcourus en ${formatDureeParlee(dureeSec)}. Bravo !`;
 }
 
 export function phraseAvanceRetard(ecartSec) {

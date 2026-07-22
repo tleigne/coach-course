@@ -90,7 +90,8 @@ export function parserGPX(texteXML) {
       const lat = parseFloat(pt.getAttribute('lat'));
       const lon = parseFloat(pt.getAttribute('lon'));
       const nomPointNode = pt.querySelector('name');
-      return { nom: nomPointNode ? nomPointNode.textContent.trim() : 'Point', lat, lon };
+      const nomPoint = nomPointNode && nomPointNode.textContent.trim();
+      return { nom: nomPoint || 'Point', lat, lon };
     })
     .filter((p) => !isNaN(p.lat) && !isNaN(p.lon));
 
