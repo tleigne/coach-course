@@ -66,6 +66,24 @@ export function phraseMontee(distanceAvantM) {
   return `Attention, une montée arrive dans environ ${distanceArrondie} mètres.`;
 }
 
+/** Indication directionnelle façon copilote de rallye. `angle` positif =
+ * virage à droite, négatif = à gauche (voir chercherVirageAVenir). */
+export function phraseVirage(distanceAvantM, angle) {
+  const direction = angle > 0 ? 'droite' : 'gauche';
+  const magnitude = Math.abs(angle);
+  const distanceArrondie = Math.round(distanceAvantM / 25) * 25;
+
+  let indication;
+  if (magnitude >= 120) indication = `épingle à ${direction}`;
+  else if (magnitude >= 70) indication = `vire à ${direction}`;
+  else indication = `tourne légèrement à ${direction}`;
+
+  if (distanceArrondie <= 30) {
+    return `Attention, ${indication} tout de suite.`;
+  }
+  return `Dans ${distanceArrondie} mètres, ${indication}.`;
+}
+
 export function phraseDepart() {
   return "C'est parti, bonne course !";
 }

@@ -64,6 +64,11 @@ html, body {
   padding: 8px;
 }
 
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .ecran {
   display: none;
   flex-direction: column;
@@ -195,6 +200,82 @@ h1 {
   fill: none;
   stroke: var(--accent);
   stroke-width: 2;
+}
+
+.trace {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.trace svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.trace-ligne {
+  fill: none;
+  stroke: var(--texte-attenue);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trace-course {
+  max-width: 200px;
+  margin: 4px auto 0;
+}
+
+.marqueur-position {
+  fill: var(--accent);
+  stroke: #0d1117;
+  stroke-width: 2;
+}
+
+/* --- Historique --- */
+
+#liste-historique {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-historique {
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.course-historique-details h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.course-historique-details p {
+  margin: 0;
+  color: var(--texte-attenue);
+  font-size: 0.85rem;
+}
+
+.course-historique-stats {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.course-historique-stats .valeur {
+  font-size: 1.1rem;
+}
+
+.historique-vide {
+  color: var(--texte-attenue);
+  text-align: center;
+  margin-top: 24px;
 }
 
 /* --- Écran objectif --- */

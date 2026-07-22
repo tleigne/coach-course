@@ -16,6 +16,45 @@ function lisserAltitudes(altitudes, fenetre = 5) {
 }
 
 /**
+ * Construit la description d'un parcours (distance cumulée, dénivelé) à
+ * partir d'une liste brute de points {lat, lon, ele}. Partagé par les
+ * parsers GPX et KML/KMZ pour éviter de dupliquer ce calcul.
+ */
+export function construireParcours(nom, brut) {
+  if (brut.length < 2) {
+    throw new Error('Ce fichier ne contient pas assez de points de parcours.');
+  }
+
+  const altitudesLissees = lisserAltitudes(brut.map((p) => p.ele));
+
+  let distanceCumulee = 0;
+  let denivelePositif = 0;
+  let deniveleNegatif = 0;
+  const points = brut.map((p, i) => {
+    if (i > 0) {
+      distanceCumulee += distanceHaversine(brut[i - 1].lat, brut[i - 1].lon, p.lat, p.lon);
+      const delta = altitudesLissees[i] - altitudesLissees[i - 1];
+      if (delta > 0) denivelePositif += delta;
+      else deniveleNegatif += -delta;
+    }
+    return {
+      lat: p.lat,
+      lon: p.lon,
+      ele: altitudesLissees[i],
+      distanceCumulee, // km depuis le départ
+    };
+  });
+
+  return {
+    nom: nom && nom.trim() ? nom.trim() : 'Parcours importé',
+    points,
+    distanceTotale: distanceCumulee, // km
+    denivelePositif: Math.round(denivelePositif), // m
+    deniveleNegatif: Math.round(deniveleNegatif), // m
+  };
+}
+
+/**
  * Parse le texte d'un fichier GPX et retourne la description du parcours.
  * Lève une erreur (avec message destiné à l'utilisateur) si le fichier est invalide.
  */
@@ -41,36 +80,10 @@ export function parserGPX(texteXML) {
     return { lat, lon, ele: isNaN(ele) ? 0 : ele };
   });
 
-  const altitudesLissees = lisserAltitudes(brut.map((p) => p.ele));
-
-  let distanceCumulee = 0;
-  let denivelePositif = 0;
-  let deniveleNegatif = 0;
-  const points = brut.map((p, i) => {
-    if (i > 0) {
-      distanceCumulee += distanceHaversine(brut[i - 1].lat, brut[i - 1].lon, p.lat, p.lon);
-      const delta = altitudesLissees[i] - altitudesLissees[i - 1];
-      if (delta > 0) denivelePositif += delta;
-      else deniveleNegatif += -delta;
-    }
-    return {
-      lat: p.lat,
-      lon: p.lon,
-      ele: altitudesLissees[i],
-      distanceCumulee, // km depuis le départ
-    };
-  });
-
   const nomNode = dom.querySelector('trk > name') || dom.querySelector('metadata > name');
-  const nom = nomNode && nomNode.textContent.trim() ? nomNode.textContent.trim() : 'Parcours importé';
+  const nom = nomNode ? nomNode.textContent : '';
 
-  return {
-    nom,
-    points,
-    distanceTotale: distanceCumulee, // km
-    denivelePositif: Math.round(denivelePositif), // m
-    deniveleNegatif: Math.round(deniveleNegatif), // m
-  };
+  return construireParcours(nom, brut);
 }
 
 /**
@@ -129,4 +142,83 @@ export function chercherMonteeAVenir(parcours, distanceActuelleKm, distanceLooka
     i++;
   }
   return null;
+}
+
+/** Cap (bearing) en degrés (0-360, 0 = nord, 90 = est) entre deux points GPS. */
+export function bearingEntre(lat1, lon1, lat2, lon2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const toDeg = (r) => (r * 180) / Math.PI;
+  const y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+/** Différence angulaire signée de `a` vers `b`, ramenée dans [-180, 180]. */
+function differenceAngle(a, b) {
+  let diff = b - a;
+  while (diff > 180) diff -= 360;
+  while (diff < -180) diff += 360;
+  return diff;
+}
+
+/** Cherche, à partir de l'index `indexDepart`, le point situé à `distanceKm`
+ * plus loin sur le parcours (distanceKm négatif = en arrière). */
+function trouverPointADistance(points, indexDepart, distanceKm) {
+  const cible = points[indexDepart].distanceCumulee + distanceKm;
+  if (distanceKm >= 0) {
+    for (let j = indexDepart; j < points.length; j++) {
+      if (points[j].distanceCumulee >= cible) return points[j];
+    }
+    return points[points.length - 1];
+  }
+  for (let j = indexDepart; j >= 0; j--) {
+    if (points[j].distanceCumulee <= cible) return points[j];
+  }
+  return points[0];
+}
+
+const FENETRE_VIRAGE_KM = 0.02; // ~20 m avant/après pour lisser le bruit GPS
+const SEUIL_ANGLE_VIRAGE_DEGRES = 35; // en dessous, on considère que c'est juste la route qui ondule
+
+/**
+ * Cherche s'il y a un virage significatif dans les `distanceLookaheadKm`
+ * prochains kilomètres à partir de `distanceActuelleKm`. Retourne
+ * { distanceAvantKm, angle } (angle positif = à droite, négatif = à gauche)
+ * ou null si rien de notable.
+ */
+export function chercherVirageAVenir(parcours, distanceActuelleKm, distanceLookaheadKm = 0.15) {
+  const { points } = parcours;
+
+  let iDepart = points.findIndex((p) => p.distanceCumulee >= distanceActuelleKm);
+  if (iDepart === -1) return null;
+
+  let meilleurAngle = 0;
+  let meilleurPoint = null;
+
+  for (let i = iDepart; i < points.length; i++) {
+    if (points[i].distanceCumulee > distanceActuelleKm + distanceLookaheadKm) break;
+    if (points[i].distanceCumulee - FENETRE_VIRAGE_KM < 0) continue;
+
+    const avant = trouverPointADistance(points, i, -FENETRE_VIRAGE_KM);
+    const apres = trouverPointADistance(points, i, FENETRE_VIRAGE_KM);
+    if (avant === points[i] || apres === points[i]) continue;
+
+    const capAvant = bearingEntre(avant.lat, avant.lon, points[i].lat, points[i].lon);
+    const capApres = bearingEntre(points[i].lat, points[i].lon, apres.lat, apres.lon);
+    const angle = differenceAngle(capAvant, capApres);
+
+    if (Math.abs(angle) > Math.abs(meilleurAngle)) {
+      meilleurAngle = angle;
+      meilleurPoint = points[i];
+    }
+  }
+
+  if (!meilleurPoint || Math.abs(meilleurAngle) < SEUIL_ANGLE_VIRAGE_DEGRES) return null;
+
+  return {
+    distanceAvantKm: meilleurPoint.distanceCumulee - distanceActuelleKm,
+    angle: meilleurAngle,
+  };
 }

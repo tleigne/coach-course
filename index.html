@@ -27,8 +27,11 @@
     <h1>Coach Course</h1>
     <p class="sous-titre">Importe ton parcours pour commencer.</p>
 
-    <label class="bouton-principal" for="fichier-gpx">Choisir un fichier GPX</label>
+    <label class="bouton-principal" for="fichier-gpx">Choisir un fichier de parcours</label>
     <input type="file" id="fichier-gpx" hidden />
+    <p class="info">Formats acceptés : GPX, KML, KMZ (export Google Maps / My Maps).</p>
+
+    <button id="bouton-voir-historique" class="bouton-texte">Voir mes courses précédentes</button>
 
     <p id="erreur-import" class="erreur"></p>
 
@@ -39,6 +42,7 @@
         <div><span class="valeur" id="parcours-denivele-plus"></span><span class="etiquette">D+</span></div>
         <div><span class="valeur" id="parcours-denivele-moins"></span><span class="etiquette">D-</span></div>
       </div>
+      <div id="trace-parcours" class="trace"></div>
       <div id="profil-parcours" class="profil"></div>
       <button id="bouton-continuer-objectif" class="bouton-principal">Continuer</button>
     </div>
@@ -105,6 +109,8 @@
       <span class="etiquette">avance / retard</span>
     </div>
 
+    <div id="trace-course" class="trace trace-course"></div>
+
     <p id="course-gps-etat" class="info-gps">GPS : recherche du signal...</p>
 
     <div class="boutons-course">
@@ -123,7 +129,15 @@
         <div><span class="valeur" id="resume-allure-moyenne"></span><span class="etiquette">allure moy.</span></div>
       </div>
     </div>
+    <button id="bouton-telecharger-gpx" class="bouton-secondaire">Télécharger le GPX (pour Strava)</button>
     <button id="bouton-nouvelle-course" class="bouton-principal">Nouvelle course</button>
+  </section>
+
+  <!-- ÉCRAN 5 : HISTORIQUE DES COURSES -->
+  <section id="ecran-historique" class="ecran">
+    <h1>Mes courses</h1>
+    <div id="liste-historique"></div>
+    <button id="bouton-retour-historique" class="bouton-secondaire">Retour</button>
   </section>
 
 </main>
