@@ -1,5 +1,59 @@
 # Roadmap — après le MVP
 
+## Principe permanent (demande du 22/07) : s'appuyer sur l'existant
+
+Thibault a demandé de systématiquement regarder ce qui existe déjà sur
+GitHub/open source avant de construire, pour optimiser performance et
+expérience utilisateur — déjà appliqué ce soir (recherche PWABuilder,
+Supabase, Strava API, limites Spotify). Le choix « zéro dépendance » de
+l'appli reste volontaire (légèreté, sécurité, pas de risque de
+supply-chain) : l'idée n'est pas d'ajouter des librairies par défaut, mais
+de vérifier qu'on ne réinvente pas quelque chose de mieux résolu ailleurs
+avant de coder, et d'utiliser les API navigateur standard (déjà fait :
+Wake Lock, Web Speech, Geolocation, DecompressionStream). Piste concrète
+pour une prochaine session : passer l'appli dans **Lighthouse** (outil
+gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
+objectif.
+
+## À faire : séances d'entraînement structurées (demande du 22/07)
+
+Thibault veut pouvoir choisir un **type de séance d'entraînement**, pas
+seulement un objectif global de temps/allure sur tout le parcours — en
+s'inspirant de ce que proposent les montres de sport (Garmin, Coros, Polar).
+Exemples cités : **seuil**, **VMA** (vitesse maximale aérobie), **tempo**
+(au sens athlétisme), **fractionné**, et un exemple concret : **4×800 m**
+(répétitions rapides avec récupération entre chaque).
+
+Ce que ça implique techniquement :
+- Un objectif de course n'est plus une seule valeur (temps/allure globale)
+  mais une **séquence de segments** : effort (distance ou durée + allure
+  cible) puis récupération (distance ou durée + allure cible plus lente),
+  répétés N fois. Ex. 4×800m = 4 fois [800m à allure VMA, puis 400m ou 2 min
+  de récupération à allure lente].
+- Bibliothèque de modèles prédéfinis à proposer (façon montres de sport) :
+  - **Seuil** : effort continu à allure "seuil" (~85-90% VMA) sur une durée
+    donnée.
+  - **VMA** : répétitions courtes et rapides (ex. 30/30, 200m, 400m) proche
+    de la vitesse maximale aérobie, avec récupération courte.
+  - **Tempo** : effort continu à allure soutenue mais submaximale, plus
+    long que le seuil.
+  - **Fractionné** : terme générique pour des répétitions effort/récup,
+    configurable (distance ou durée de chaque segment, nombre de
+    répétitions).
+  - Modèle libre : laisser l'utilisateur définir son propre NxDistance
+    (comme le 4×800m cité) avec ses propres allures cibles.
+- Coaching vocal à adapter : annoncer les transitions entre segments
+  ("Top, effort !", "Récupération, ralentis", "Encore 2 répétitions"),
+  probablement en s'inspirant de `js/profil.js` (zones d'allure Strava
+  déjà présentes : seuil ≈ 313 sec/km, confortable ≈ 360 sec/km — utilisables
+  comme valeurs par défaut suggérées pour "seuil"/"tempo").
+- Écran objectif (écran 2) à repenser : ajouter un choix "Séance
+  d'entraînement structurée" en plus de temps cible / allure cible / gérer
+  l'effort, avec un configurateur de segments.
+
+**Pas codé ce soir** (demande arrivée en fin de session, après un gros
+volume de fonctionnalités déjà livré) — à démarrer à la prochaine session.
+
 ## En attente d'arbitrage : comptes utilisateurs (authentification + stockage des données)
 
 Demande de Thibault (22/07) : permettre à chaque utilisateur de créer un
