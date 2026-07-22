@@ -1,19 +1,23 @@
 // Orchestration de l'appli : écrans, état de la course, décisions du coaching vocal.
-import { parserGPX, chercherMonteeAVenir, denivelePositifRestant } from './gpx.js';
+import { parserGPX, chercherMonteeAVenir, denivelePositifRestant, chercherVirageAVenir } from './gpx.js';
+import { parserKML, extraireKMLDeKMZ } from './kml.js';
 import { SuiviGPS } from './geo.js';
 import {
   CoachVocal,
   phraseEncouragementAleatoire,
   phraseHydratation,
   phraseMontee,
+  phraseVirage,
   phraseDepart,
   phraseFin,
   phraseAvanceRetard,
   phraseRapportAllure,
   phraseFaisabilite,
 } from './coach.js';
-import { formatDistance, formatDuree, formatAllure, formatEcart, parseHMS, parseAllure } from './utils.js';
+import { formatDistance, formatDuree, formatAllure, formatEcart, parseHMS, parseAllure, echapperHTML } from './utils.js';
 import { evaluerFaisabilite } from './profil.js';
+import { sauvegarderCourse, listerCourses } from './historique.js';
+import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
 const INTERVALLE_RAPPORT_MS = 150000; // rapport d'allure / avance-retard : ~2,5 min
@@ -21,6 +25,8 @@ const INTERVALLE_HYDRATATION_MS = 20 * 60 * 1000; // rappel de boire : 20 min
 const INTERVALLE_ENCOURAGEMENT_MS = 90000; // encouragement : ~1,5 min
 const COOLDOWN_MONTEE_MS = 60000; // ne pas re-signaler la même montée trop vite
 const DISTANCE_LOOKAHEAD_MONTEE_KM = 1;
+const COOLDOWN_VIRAGE_MS = 15000; // les virages peuvent s'enchaîner plus vite que les montées
+const DISTANCE_LOOKAHEAD_VIRAGE_KM = 0.15;
 
 const etat = {
   parcours: null,
@@ -38,6 +44,8 @@ const etat = {
       encouragement: 0,
       derniereMonteeDistanceKm: null,
       derniereMonteeTemps: 0,
+      dernierVirageDistanceKm: null,
+      dernierVirageTemps: 0,
     },
   },
 };
@@ -47,6 +55,8 @@ let tracker = null;
 let idIntervalleChrono = null;
 let idIntervalleCoaching = null;
 let dernierEncouragement = null;
+let projecteurParcours = null; // projection lat/lon -> coordonnées SVG du parcours en cours
+let derniereTraceEnregistree = []; // positions GPS de la dernière course terminée, pour export GPX
 
 // --- Références DOM ---
 const ecrans = {
@@ -54,6 +64,7 @@ const ecrans = {
   objectif: document.getElementById('ecran-objectif'),
   course: document.getElementById('ecran-course'),
   resume: document.getElementById('ecran-resume'),
+  historique: document.getElementById('ecran-historique'),
 };
 
 function afficherEcran(nom) {
@@ -75,8 +86,21 @@ inputFichier.addEventListener('change', async () => {
   blocResumeParcours.classList.add('cache');
 
   try {
-    const texte = await fichier.text();
-    const parcours = parserGPX(texte);
+    const nomFichier = fichier.name.toLowerCase();
+    let parcours;
+
+    if (nomFichier.endsWith('.kmz')) {
+      const donnees = await fichier.arrayBuffer();
+      const texteKML = await extraireKMLDeKMZ(donnees);
+      parcours = parserKML(texteKML);
+    } else if (nomFichier.endsWith('.kml')) {
+      const texte = await fichier.text();
+      parcours = parserKML(texte);
+    } else {
+      const texte = await fichier.text();
+      parcours = parserGPX(texte);
+    }
+
     etat.parcours = parcours;
     afficherResumeParcours(parcours);
   } catch (e) {
@@ -90,7 +114,59 @@ function afficherResumeParcours(parcours) {
   document.getElementById('parcours-denivele-plus').textContent = `+${parcours.denivelePositif} m`;
   document.getElementById('parcours-denivele-moins').textContent = `-${parcours.deniveleNegatif} m`;
   document.getElementById('profil-parcours').innerHTML = genererProfilSVG(parcours.points);
+
+  projecteurParcours = creerProjecteur(parcours.points);
+  document.getElementById('trace-parcours').innerHTML = genererTraceSVG(projecteurParcours, parcours.points);
+
   blocResumeParcours.classList.remove('cache');
+}
+
+/**
+ * Calcule une projection simple (équirectangulaire, corrigée par le cosinus
+ * de la latitude) des points lat/lon du parcours vers un repère SVG, pour
+ * afficher la forme du tracé sans dépendre d'un service de carte externe.
+ */
+function creerProjecteur(points, tailleCible = 260) {
+  const lats = points.map((p) => p.lat);
+  const lons = points.map((p) => p.lon);
+  const latMin = Math.min(...lats);
+  const latMax = Math.max(...lats);
+  const lonMin = Math.min(...lons);
+  const lonMax = Math.max(...lons);
+  const latMoyenne = (latMin + latMax) / 2;
+  const facteurLon = Math.cos((latMoyenne * Math.PI) / 180) || 1;
+
+  const largeurBrute = (lonMax - lonMin) * facteurLon || 0.0001;
+  const hauteurBrute = latMax - latMin || 0.0001;
+  const echelle = tailleCible / Math.max(largeurBrute, hauteurBrute);
+  const marge = tailleCible * 0.1;
+
+  function projeter(lat, lon) {
+    return {
+      x: (lon - lonMin) * facteurLon * echelle + marge,
+      y: (latMax - lat) * echelle + marge, // nord en haut
+    };
+  }
+
+  return { projeter, taille: tailleCible + marge * 2 };
+}
+
+function genererTraceSVG(projecteur, points, idMarqueur) {
+  const coords = points
+    .map((p) => {
+      const { x, y } = projecteur.projeter(p.lat, p.lon);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+
+  const marqueur = idMarqueur
+    ? `<circle id="${idMarqueur}" class="marqueur-position" r="5" cx="-100" cy="-100"></circle>`
+    : '';
+
+  return `<svg viewBox="0 0 ${projecteur.taille.toFixed(1)} ${projecteur.taille.toFixed(1)}">
+    <polyline points="${coords}" class="trace-ligne"></polyline>
+    ${marqueur}
+  </svg>`;
 }
 
 function genererProfilSVG(points) {
@@ -121,6 +197,11 @@ function genererProfilSVG(points) {
 document.getElementById('bouton-continuer-objectif').addEventListener('click', () => {
   if (!etat.parcours) return;
   afficherEcran('objectif');
+});
+
+document.getElementById('bouton-voir-historique').addEventListener('click', () => {
+  afficherHistorique();
+  afficherEcran('historique');
 });
 
 // ===================== ÉCRAN 2 : OBJECTIF =====================
@@ -193,12 +274,22 @@ function demarrerCourse() {
       encouragement: Date.now(),
       derniereMonteeDistanceKm: null,
       derniereMonteeTemps: 0,
+      dernierVirageDistanceKm: null,
+      dernierVirageTemps: 0,
     },
   };
 
   document.getElementById('course-ecart-ligne').classList.toggle('cache', etat.objectif.type === 'effort');
   boutonPause.textContent = 'Pause';
   afficherEcran('course');
+
+  if (projecteurParcours) {
+    document.getElementById('trace-course').innerHTML = genererTraceSVG(
+      projecteurParcours,
+      etat.parcours.points,
+      'marqueur-position-course'
+    );
+  }
 
   tracker = new SuiviGPS({
     onMiseAJour: surMiseAJourGPS,
@@ -226,6 +317,16 @@ function surMiseAJourGPS(etatGPS) {
   etat.course.precisionM = etatGPS.precisionM;
   renderCourse();
   verifierMonteeAVenir();
+  verifierVirageAVenir();
+
+  if (projecteurParcours && etatGPS.lat != null && etatGPS.lon != null) {
+    const marqueur = document.getElementById('marqueur-position-course');
+    if (marqueur) {
+      const { x, y } = projecteurParcours.projeter(etatGPS.lat, etatGPS.lon);
+      marqueur.setAttribute('cx', x.toFixed(1));
+      marqueur.setAttribute('cy', y.toFixed(1));
+    }
+  }
 }
 
 function surErreurGPS(err) {
@@ -334,6 +435,32 @@ function verifierMonteeAVenir() {
   c.derniereMonteeTemps = maintenant;
 }
 
+function verifierVirageAVenir() {
+  if (!etat.parcours) return;
+  const c = etat.course.derniereMajCoaching;
+  const maintenant = Date.now();
+  if (maintenant - c.dernierVirageTemps < COOLDOWN_VIRAGE_MS) return;
+
+  const virage = chercherVirageAVenir(
+    etat.parcours,
+    etat.course.distanceParcourueKm,
+    DISTANCE_LOOKAHEAD_VIRAGE_KM
+  );
+  if (!virage) return;
+
+  const positionAbsolueKm = etat.course.distanceParcourueKm + virage.distanceAvantKm;
+  if (
+    c.dernierVirageDistanceKm !== null &&
+    Math.abs(positionAbsolueKm - c.dernierVirageDistanceKm) < 0.05
+  ) {
+    return;
+  }
+
+  coach.parler(phraseVirage(virage.distanceAvantKm * 1000, virage.angle));
+  c.dernierVirageDistanceKm = positionAbsolueKm;
+  c.dernierVirageTemps = maintenant;
+}
+
 boutonPause.addEventListener('click', () => {
   etat.course.enPause = !etat.course.enPause;
   if (etat.course.enPause) {
@@ -354,6 +481,7 @@ document.getElementById('bouton-terminer').addEventListener('click', () => {
 function terminerCourse() {
   clearInterval(idIntervalleChrono);
   clearInterval(idIntervalleCoaching);
+  derniereTraceEnregistree = tracker ? tracker.obtenirTrace() : [];
   if (tracker) tracker.arreter();
 
   const distanceFinale = etat.course.distanceParcourueKm;
@@ -364,10 +492,27 @@ function terminerCourse() {
   document.getElementById('resume-temps-finale').textContent = dureeTexte;
   document.getElementById('resume-allure-moyenne').textContent = formatAllure(allureMoyenne);
 
+  const boutonTelecharger = document.getElementById('bouton-telecharger-gpx');
+  boutonTelecharger.disabled = derniereTraceEnregistree.length < 2;
+
   coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), dureeTexte), { prioritaire: true });
+
+  sauvegarderCourse({
+    nomParcours: etat.parcours ? etat.parcours.nom : 'Parcours',
+    distanceKm: distanceFinale,
+    dureeSec: etat.course.tempsEcouleSec,
+    allureMoyenneSecParKm: allureMoyenne,
+  });
 
   afficherEcran('resume');
 }
+
+document.getElementById('bouton-telecharger-gpx').addEventListener('click', () => {
+  if (derniereTraceEnregistree.length < 2) return;
+  const nomCourse = `${etat.parcours ? etat.parcours.nom : 'Course'} - ${new Date().toLocaleDateString('fr-FR')}`;
+  const contenuGPX = genererGPXDepuisTrace(derniereTraceEnregistree, nomCourse);
+  telechargerFichier(`course-${Date.now()}.gpx`, contenuGPX);
+});
 
 // ===================== ÉCRAN 4 : RÉSUMÉ =====================
 
@@ -378,6 +523,42 @@ document.getElementById('bouton-nouvelle-course').addEventListener('click', () =
   blocResumeParcours.classList.add('cache');
   afficherEcran('import');
 });
+
+// ===================== ÉCRAN 5 : HISTORIQUE =====================
+
+document.getElementById('bouton-retour-historique').addEventListener('click', () => {
+  afficherEcran('import');
+});
+
+function afficherHistorique() {
+  const conteneur = document.getElementById('liste-historique');
+  const courses = listerCourses();
+
+  if (courses.length === 0) {
+    conteneur.innerHTML = '<p class="historique-vide">Aucune course enregistrée pour l\'instant.</p>';
+    return;
+  }
+
+  conteneur.innerHTML = courses
+    .map((c) => {
+      const date = new Date(c.date);
+      const dateTexte = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const heureTexte = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="course-historique">
+          <div class="course-historique-details">
+            <h3>${echapperHTML(c.nomParcours)}</h3>
+            <p>${dateTexte} à ${heureTexte}</p>
+          </div>
+          <div class="course-historique-stats">
+            <span class="valeur">${formatDistance(c.distanceKm)}</span><br>
+            <span class="etiquette">${formatDuree(c.dureeSec)} · ${formatAllure(c.allureMoyenneSecParKm)}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
 
 // ===================== SERVICE WORKER =====================
 

@@ -1,5 +1,13 @@
 // Fonctions utilitaires partagées : distance GPS, formatage des nombres/temps.
 
+/** Échappe un texte avant de l'insérer dans du HTML (ex. nom de parcours
+ * venant d'un fichier importé par l'utilisateur). */
+export function echapperHTML(texte) {
+  const div = document.createElement('div');
+  div.textContent = texte;
+  return div.innerHTML;
+}
+
 /** Distance en kilomètres entre deux points GPS (formule de Haversine). */
 export function distanceHaversine(lat1, lon1, lat2, lon2) {
   const R = 6371; // rayon de la Terre en km
