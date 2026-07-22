@@ -8,13 +8,23 @@ import {
   phraseHydratation,
   phraseMontee,
   phraseVirage,
+  phrasePointInteret,
   phraseDepart,
   phraseFin,
   phraseAvanceRetard,
   phraseRapportAllure,
   phraseFaisabilite,
 } from './coach.js';
-import { formatDistance, formatDuree, formatAllure, formatEcart, parseHMS, parseAllure, echapperHTML } from './utils.js';
+import {
+  formatDistance,
+  formatDuree,
+  formatAllure,
+  formatEcart,
+  parseHMS,
+  parseAllure,
+  echapperHTML,
+  distanceHaversine,
+} from './utils.js';
 import { evaluerFaisabilite } from './profil.js';
 import { sauvegarderCourse, listerCourses } from './historique.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
@@ -57,6 +67,40 @@ let idIntervalleCoaching = null;
 let dernierEncouragement = null;
 let projecteurParcours = null; // projection lat/lon -> coordonnées SVG du parcours en cours
 let derniereTraceEnregistree = []; // positions GPS de la dernière course terminée, pour export GPX
+let verrouEcran = null; // Wake Lock actif pendant la course, pour empêcher l'écran de s'éteindre
+let pointsInteretAnnonces = new Set(); // index des points d'intérêt déjà annoncés pendant la course
+const SEUIL_ANNONCE_POINT_INTERET_M = 300;
+
+/** Empêche l'écran de s'éteindre/se verrouiller automatiquement pendant la
+ * course (sans quoi le GPS et la voix peuvent être suspendus par le
+ * téléphone). Si le navigateur ne supporte pas l'API, l'appli continue sans. */
+async function demanderVerrouEcran() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    verrouEcran = await navigator.wakeLock.request('screen');
+    verrouEcran.addEventListener('release', () => {
+      verrouEcran = null;
+    });
+  } catch (e) {
+    // Refus ou indisponibilité ponctuelle : l'appli continue sans verrou d'écran.
+  }
+}
+
+function relacherVerrouEcran() {
+  if (verrouEcran) {
+    verrouEcran.release();
+    verrouEcran = null;
+  }
+}
+
+// Le verrou est automatiquement relâché quand l'onglet passe en arrière-plan
+// (ex. bascule vers une autre appli) ; on le redemande dès que l'appli
+// redevient visible, si une course est toujours en cours.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && etat.course.enCours && !verrouEcran) {
+    demanderVerrouEcran();
+  }
+});
 
 // --- Références DOM ---
 const ecrans = {
@@ -261,6 +305,7 @@ const elCourseGpsEtat = document.getElementById('course-gps-etat');
 const boutonPause = document.getElementById('bouton-pause');
 
 function demarrerCourse() {
+  pointsInteretAnnonces = new Set();
   etat.course = {
     enCours: true,
     enPause: false,
@@ -296,6 +341,7 @@ function demarrerCourse() {
     onErreur: surErreurGPS,
   });
   tracker.demarrer();
+  demanderVerrouEcran();
 
   idIntervalleChrono = setInterval(() => {
     if (!etat.course.enPause) {
@@ -327,6 +373,22 @@ function surMiseAJourGPS(etatGPS) {
       marqueur.setAttribute('cy', y.toFixed(1));
     }
   }
+
+  if (etatGPS.lat != null && etatGPS.lon != null) {
+    verifierPointsInteret(etatGPS.lat, etatGPS.lon);
+  }
+}
+
+function verifierPointsInteret(latActuelle, lonActuelle) {
+  if (!etat.parcours || !etat.parcours.pointsInteret) return;
+  etat.parcours.pointsInteret.forEach((point, index) => {
+    if (pointsInteretAnnonces.has(index)) return;
+    const distanceM = distanceHaversine(latActuelle, lonActuelle, point.lat, point.lon) * 1000;
+    if (distanceM <= SEUIL_ANNONCE_POINT_INTERET_M) {
+      coach.parler(phrasePointInteret(point.nom, distanceM));
+      pointsInteretAnnonces.add(index);
+    }
+  });
 }
 
 function surErreurGPS(err) {
@@ -483,6 +545,8 @@ function terminerCourse() {
   clearInterval(idIntervalleCoaching);
   derniereTraceEnregistree = tracker ? tracker.obtenirTrace() : [];
   if (tracker) tracker.arreter();
+  etat.course.enCours = false;
+  relacherVerrouEcran();
 
   const distanceFinale = etat.course.distanceParcourueKm;
   const dureeTexte = formatDuree(etat.course.tempsEcouleSec);

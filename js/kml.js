@@ -27,11 +27,15 @@ export function parserKML(texteXML) {
 
   let brut = [];
 
-  const blocsCoordonnees = Array.from(texteXML.matchAll(/<coordinates[^>]*>([\s\S]*?)<\/coordinates>/gi)).map(
+  // On ne cible que les coordonnées à l'intérieur d'une <LineString> (le
+  // tracé), pas celles d'un <Point> isolé (marqueur / point d'intérêt) qui
+  // pourrait sinon polluer le tracé avec un point hors-route.
+  const blocsLineString = Array.from(texteXML.matchAll(/<LineString[^>]*>([\s\S]*?)<\/LineString>/gi)).map(
     (m) => m[1]
   );
-  for (const bloc of blocsCoordonnees) {
-    brut = brut.concat(parserCoordonneesKML(bloc));
+  for (const bloc of blocsLineString) {
+    const matchCoord = bloc.match(/<coordinates[^>]*>([\s\S]*?)<\/coordinates>/i);
+    if (matchCoord) brut = brut.concat(parserCoordonneesKML(matchCoord[1]));
   }
 
   if (brut.length < 2) {
@@ -50,7 +54,26 @@ export function parserKML(texteXML) {
   const matchNom = texteXML.match(/<name>([\s\S]*?)<\/name>/i);
   const nom = matchNom ? matchNom[1].replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim() : '';
 
-  return construireParcours(nom, brut);
+  // Points d'intérêt : Placemark contenant un <Point> (et pas une LineString).
+  const pointsInteret = [];
+  const blocsPlacemark = Array.from(texteXML.matchAll(/<Placemark[^>]*>([\s\S]*?)<\/Placemark>/gi)).map(
+    (m) => m[1]
+  );
+  for (const bloc of blocsPlacemark) {
+    if (!/<Point[\s>]/i.test(bloc) || /<LineString[\s>]/i.test(bloc)) continue;
+    const matchCoord = bloc.match(/<coordinates[^>]*>([\s\S]*?)<\/coordinates>/i);
+    if (!matchCoord) continue;
+    const [lon, lat] = matchCoord[1].trim().split(',').map(Number);
+    if (isNaN(lat) || isNaN(lon)) continue;
+    const matchNomPoint = bloc.match(/<name>([\s\S]*?)<\/name>/i);
+    pointsInteret.push({
+      nom: matchNomPoint ? matchNomPoint[1].replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim() : 'Point',
+      lat,
+      lon,
+    });
+  }
+
+  return construireParcours(nom, brut, pointsInteret);
 }
 
 async function decompresserDeflate(octetsCompresses) {

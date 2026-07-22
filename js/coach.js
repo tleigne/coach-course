@@ -84,6 +84,15 @@ export function phraseVirage(distanceAvantM, angle) {
   return `Dans ${distanceArrondie} mètres, ${indication}.`;
 }
 
+/** Annonce d'un point d'intérêt du parcours (ravitaillement, sommet...). */
+export function phrasePointInteret(nom, distanceAvantM) {
+  const distanceArrondie = Math.round(distanceAvantM / 50) * 50;
+  if (distanceArrondie <= 50) {
+    return `Tu arrives à ${nom}.`;
+  }
+  return `Dans environ ${distanceArrondie} mètres : ${nom}.`;
+}
+
 export function phraseDepart() {
   return "C'est parti, bonne course !";
 }

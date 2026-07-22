@@ -18,9 +18,10 @@ function lisserAltitudes(altitudes, fenetre = 5) {
 /**
  * Construit la description d'un parcours (distance cumulée, dénivelé) à
  * partir d'une liste brute de points {lat, lon, ele}. Partagé par les
- * parsers GPX et KML/KMZ pour éviter de dupliquer ce calcul.
+ * parsers GPX et KML/KMZ pour éviter de dupliquer ce calcul. `pointsInteret`
+ * (waypoints nommés : ravitaillements, sommets...) est optionnel.
  */
-export function construireParcours(nom, brut) {
+export function construireParcours(nom, brut, pointsInteret = []) {
   if (brut.length < 2) {
     throw new Error('Ce fichier ne contient pas assez de points de parcours.');
   }
@@ -51,6 +52,7 @@ export function construireParcours(nom, brut) {
     distanceTotale: distanceCumulee, // km
     denivelePositif: Math.round(denivelePositif), // m
     deniveleNegatif: Math.round(deniveleNegatif), // m
+    pointsInteret, // [{nom, lat, lon}] : ravitaillements, sommets, etc.
   };
 }
 
@@ -83,7 +85,16 @@ export function parserGPX(texteXML) {
   const nomNode = dom.querySelector('trk > name') || dom.querySelector('metadata > name');
   const nom = nomNode ? nomNode.textContent : '';
 
-  return construireParcours(nom, brut);
+  const pointsInteret = Array.from(dom.querySelectorAll('wpt'))
+    .map((pt) => {
+      const lat = parseFloat(pt.getAttribute('lat'));
+      const lon = parseFloat(pt.getAttribute('lon'));
+      const nomPointNode = pt.querySelector('name');
+      return { nom: nomPointNode ? nomPointNode.textContent.trim() : 'Point', lat, lon };
+    })
+    .filter((p) => !isNaN(p.lat) && !isNaN(p.lon));
+
+  return construireParcours(nom, brut, pointsInteret);
 }
 
 /**
