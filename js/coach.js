@@ -33,7 +33,17 @@ export class CoachVocal {
 
   _chargerVoix() {
     const toutesVoix = speechSynthesis.getVoices();
-    this.voixDisponibles = toutesVoix.filter((v) => v.lang && v.lang.toLowerCase().startsWith('fr'));
+    const voixFrancaises = toutesVoix.filter((v) => v.lang && v.lang.toLowerCase().startsWith('fr'));
+
+    // Certains navigateurs/moteurs TTS annoncent la même voix plusieurs fois
+    // (même nom + même langue) : on ne garde que la première occurrence.
+    const nomsVus = new Set();
+    this.voixDisponibles = voixFrancaises.filter((v) => {
+      const cle = `${v.name}|${v.lang}`;
+      if (nomsVus.has(cle)) return false;
+      nomsVus.add(cle);
+      return true;
+    });
 
     let nomPrefere = null;
     try {

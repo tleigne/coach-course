@@ -17,7 +17,7 @@
 :root[data-theme='clair'] {
   --fond: #f5f6f8;
   --fond-carte: #ffffff;
-  --accent: #e56a00;
+  --accent: #b34f00;
   --accent-vert: #1e8e3e;
   --texte: #14181f;
   --texte-attenue: #5b6472;
@@ -29,7 +29,7 @@
   :root:not([data-theme]) {
     --fond: #f5f6f8;
     --fond-carte: #ffffff;
-    --accent: #e56a00;
+    --accent: #b34f00;
     --accent-vert: #1e8e3e;
     --texte: #14181f;
     --texte-attenue: #5b6472;
