@@ -57,6 +57,34 @@ mètres", etc.), pas seulement des infos de rythme/dénivelé. Nécessite :
 Le dernier message de Thibault se terminait par "et aussi" sans suite : lui
 redemander en début de session s'il avait une 5ᵉ chose en tête.
 
+### 6. Historique des courses
+Actuellement rien n'est conservé après l'écran de résumé (retour à zéro).
+Ajouter un historique local des courses terminées (date, parcours, distance,
+durée, allure moyenne, D+) — stocké en `localStorage` puisqu'il n'y a pas de
+backend, avec un nouvel écran pour consulter les courses passées. Réfléchir
+demain à la structure de données et à une éventuelle limite de taille
+(purger les plus anciennes après N courses, `localStorage` n'étant pas
+illimité).
+
+### 7. Import de parcours via Google Maps (pas seulement un fichier GPX)
+Thibault veut pouvoir indiquer un tracé à suivre à partir de Google Maps,
+sans forcément passer par un export GPX. Plusieurs pistes à évaluer demain,
+avec des compromis très différents :
+- **Coller un lien d'itinéraire Google Maps** et en extraire les points :
+  fragile (le format des URL Google Maps n'est pas une API stable, change
+  selon la plateforme/version, et les itinéraires courts ne portent pas
+  toujours le tracé complet dans l'URL).
+- **API Google Maps Directions/Routes** : plus fiable, mais demande une clé
+  API Google, une facturation potentielle au-delà d'un quota gratuit, et une
+  dépendance réseau (contraire à l'esprit "hors-ligne" actuel de l'appli).
+- **Import d'un fichier KML/KMZ** (export natif de Google Maps/My Maps) en
+  plus du GPX : probablement le compromis le plus simple techniquement (même
+  logique de parsing que `js/gpx.js`, juste un autre format XML à lire),
+  sans dépendance réseau ni clé API.
+Recommandation à discuter demain : commencer par le support KML/KMZ (peu
+d'effort, cohérent avec l'existant), et ne considérer l'API Google Maps que
+si le besoin de coller un lien directement s'avère essentiel.
+
 ## Déjà identifié (V2/V3)
 - Audio en arrière-plan, écran éteint, téléphone en poche.
 - Ravitaillements et points clés géolocalisés sur le parcours.
