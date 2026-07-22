@@ -38,11 +38,6 @@ après coup. À couvrir avant toute soumission :
   Android (targetSdkVersion) exigé par Google Play au moment de la
   soumission (les exigences évoluent, à vérifier à ce moment-là).
 
-## Point ouvert
-Un message de Thibault du 21/07 s'était coupé sur "et aussi" sans suite —
-toujours à reposer la question s'il avait un point en tête non couvert
-depuis.
-
 ## Fait — 2026-07-22
 
 - **Tracé du parcours affiché visuellement** (vue 2D du GPX, projection
