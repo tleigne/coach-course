@@ -15,44 +15,33 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
-## À faire : séances d'entraînement structurées (demande du 22/07)
+## Fait — 2026-07-23 : séances d'entraînement structurées
 
-Thibault veut pouvoir choisir un **type de séance d'entraînement**, pas
-seulement un objectif global de temps/allure sur tout le parcours — en
-s'inspirant de ce que proposent les montres de sport (Garmin, Coros, Polar).
-Exemples cités : **seuil**, **VMA** (vitesse maximale aérobie), **tempo**
-(au sens athlétisme), **fractionné**, et un exemple concret : **4×800 m**
-(répétitions rapides avec récupération entre chaque).
+Demande du 22/07, réalisée le 23/07. Un objectif de course peut maintenant
+être une **séance structurée** plutôt qu'une seule valeur de temps/allure
+globale, façon montres de sport (Garmin, Coros, Polar) :
+- **Seuil** et **Tempo** : effort continu à allure seuil/tempo (dérivées du
+  profil Strava dans `js/profil.js`) sur une durée choisie.
+- **VMA** : répétitions courtes (durée effort/récup configurables, par
+  défaut 30s/30s) à l'allure VMA estimée.
+- **Fractionné personnalisé** : NxDistance configurable (ex. 4×800m avec
+  400m de récupération), avec allure cible optionnelle (VMA par défaut).
+- Un échauffement (10 min) et un retour au calme (5 min) sont ajoutés
+  automatiquement à chaque séance.
+- Le coach annonce vocalement chaque transition de segment (effort,
+  récupération, numéro de répétition, allure cible), et l'écran de course
+  affiche un badge avec le segment en cours, l'allure cible et le temps/
+  distance restant dans le segment.
+- Implémenté dans `js/seances.js` (modèles + classe `SuiviSeance` qui suit
+  la progression segment par segment) et câblé dans `js/app.js`/`js/coach.js`.
+- Le nom de la séance est conservé dans l'historique des courses.
 
-Ce que ça implique techniquement :
-- Un objectif de course n'est plus une seule valeur (temps/allure globale)
-  mais une **séquence de segments** : effort (distance ou durée + allure
-  cible) puis récupération (distance ou durée + allure cible plus lente),
-  répétés N fois. Ex. 4×800m = 4 fois [800m à allure VMA, puis 400m ou 2 min
-  de récupération à allure lente].
-- Bibliothèque de modèles prédéfinis à proposer (façon montres de sport) :
-  - **Seuil** : effort continu à allure "seuil" (~85-90% VMA) sur une durée
-    donnée.
-  - **VMA** : répétitions courtes et rapides (ex. 30/30, 200m, 400m) proche
-    de la vitesse maximale aérobie, avec récupération courte.
-  - **Tempo** : effort continu à allure soutenue mais submaximale, plus
-    long que le seuil.
-  - **Fractionné** : terme générique pour des répétitions effort/récup,
-    configurable (distance ou durée de chaque segment, nombre de
-    répétitions).
-  - Modèle libre : laisser l'utilisateur définir son propre NxDistance
-    (comme le 4×800m cité) avec ses propres allures cibles.
-- Coaching vocal à adapter : annoncer les transitions entre segments
-  ("Top, effort !", "Récupération, ralentis", "Encore 2 répétitions"),
-  probablement en s'inspirant de `js/profil.js` (zones d'allure Strava
-  déjà présentes : seuil ≈ 313 sec/km, confortable ≈ 360 sec/km — utilisables
-  comme valeurs par défaut suggérées pour "seuil"/"tempo").
-- Écran objectif (écran 2) à repenser : ajouter un choix "Séance
-  d'entraînement structurée" en plus de temps cible / allure cible / gérer
-  l'effort, avec un configurateur de segments.
-
-**Pas codé ce soir** (demande arrivée en fin de session, après un gros
-volume de fonctionnalités déjà livré) — à démarrer à la prochaine session.
+Non couvert pour l'instant (pistes pour plus tard si le besoin se
+confirme) : personnalisation fine des allures par segment au-delà de
+seuil/tempo/VMA dérivés du profil, sauvegarde de séances favorites/
+personnalisées, alternance automatique effort/récup basée sur la fréquence
+cardiaque (nécessiterait un capteur externe, hors de portée du GPS/
+téléphone seul).
 
 ## En attente d'arbitrage : comptes utilisateurs (authentification + stockage des données)
 
