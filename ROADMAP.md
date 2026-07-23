@@ -171,7 +171,9 @@ nettement.
 
 ## Déjà identifié (V2/V3, pas encore fait)
 - Audio en arrière-plan, écran éteint, téléphone en poche.
-- Ravitaillements et points clés géolocalisés sur le parcours.
+
+~~Ravitaillements et points clés géolocalisés sur le parcours~~ — fait le
+22/07 (points d'intérêt extraits des waypoints GPX/KML, voir plus bas).
 
 ## En réflexion : musique pendant la course (Spotify)
 

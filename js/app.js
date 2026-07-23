@@ -40,6 +40,7 @@ import {
   SuiviSeance,
 } from './seances.js';
 import { Chronometre } from './chronometre.js';
+import { SOURCE_AUDIO_SILENCE } from './audio-silence.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
 const INTERVALLE_RAPPORT_MS = 150000; // rapport d'allure / avance-retard : ~2,5 min
@@ -114,6 +115,37 @@ document.addEventListener('visibilitychange', () => {
     demanderVerrouEcran();
   }
 });
+
+// Joue un son silencieux en boucle pendant la course : le téléphone considère
+// alors l'appli comme lecteur média actif, ce qui aide Android/Chrome à
+// continuer d'exécuter le GPS et la voix quand l'écran s'éteint ou que
+// l'appli passe en arrière-plan. Complète le Wake Lock (qui, lui, ne
+// fonctionne que si la page reste visible) sans le remplacer : un
+// verrouillage complet du téléphone reste une limite native des PWA.
+const audioMaintienActif = new Audio(SOURCE_AUDIO_SILENCE);
+audioMaintienActif.loop = true;
+
+function demarrerMaintienActif() {
+  audioMaintienActif.play().catch(() => {
+    // Lecture refusée (rare, hors d'un geste utilisateur) : l'appli continue sans.
+  });
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'Coach Course — course en cours',
+      artist: 'Coaching vocal actif',
+    });
+    navigator.mediaSession.playbackState = 'playing';
+  }
+}
+
+function arreterMaintienActif() {
+  audioMaintienActif.pause();
+  audioMaintienActif.currentTime = 0;
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'none';
+    navigator.mediaSession.metadata = null;
+  }
+}
 
 // --- Références DOM ---
 const ecrans = {
@@ -493,6 +525,7 @@ function demarrerCourse() {
   });
   tracker.demarrer();
   demanderVerrouEcran();
+  demarrerMaintienActif();
 
   idIntervalleChrono = setInterval(() => {
     if (!etat.course.enPause) {
@@ -749,6 +782,7 @@ function terminerCourse() {
   derniereTraceEnregistree = tracker ? tracker.obtenirTrace() : [];
   if (tracker) tracker.arreter();
   relacherVerrouEcran();
+  arreterMaintienActif();
   suiviSeance = null;
 
   const distanceFinale = etat.course.distanceParcourueKm;
