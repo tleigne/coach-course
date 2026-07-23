@@ -386,7 +386,8 @@ h1 {
   padding: 0 0 8px 30px;
 }
 
-.bloc-saisie input[type="text"] {
+.bloc-saisie input[type="text"],
+.bloc-saisie input[type="number"] {
   width: 100%;
   padding: 14px;
   font-size: 1.1rem;
@@ -394,6 +395,31 @@ h1 {
   border: 2px solid var(--bordure);
   background: var(--fond-carte);
   color: var(--texte);
+  margin-bottom: 10px;
+}
+
+.choix-sous-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  padding: 6px 0;
+}
+
+.choix-sous-type input {
+  width: 18px;
+  height: 18px;
+}
+
+.sous-bloc-seance {
+  padding: 6px 0 6px 26px;
+}
+
+.sous-bloc-seance label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--texte-attenue);
+  margin-bottom: 4px;
 }
 
 /* --- Écran course : gros chiffres, lisible en plein effort --- */
@@ -438,6 +464,32 @@ h1 {
 
 .info-gps {
   text-align: center;
+}
+
+.segment-seance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--fond-carte);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.segment-seance-type {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#segment-seance-repetition,
+#segment-seance-allure,
+#segment-seance-reste {
+  color: var(--texte-attenue);
+  font-size: 0.9rem;
 }
 
 .boutons-secondaires-import {

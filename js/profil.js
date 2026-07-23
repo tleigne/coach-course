@@ -10,7 +10,9 @@
 // blessure, forme différente).
 export const PROFIL_COUREUR = {
   allureConfortableSecParKm: 360, // 6:00/km — rythme tenable longtemps sans forcer
+  allureTempoSecParKm: 336, // 5:36/km — effort soutenu mais sous-maximal, entre confortable et seuil
   allureSeuilSecParKm: 313, // 5:13/km — rythme "seuil", tenable seulement sur un effort soutenu
+  allureVMASecParKm: 275, // 4:35/km — vitesse maximale aérobie, tenue seulement sur de courtes répétitions
   penaliteDeniveleSecParKmParMParKm: 4.4, // ralentissement (sec/km) par mètre de D+ par km de pente
 };
 

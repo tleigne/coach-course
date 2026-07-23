@@ -1,5 +1,5 @@
 // Coaching vocal : synthèse vocale en français (Web Speech API) + banques de phrases.
-import { formatDureeParlee } from './utils.js';
+import { formatDureeParlee, formatAllure } from './utils.js';
 
 const CLE_VOIX_PREFEREE = 'coach-course-voix-preferee';
 
@@ -203,4 +203,21 @@ export function phraseFaisabilite(niveau) {
     return 'Ce sera difficile à rattraper vu la suite du parcours : mieux vaut assurer une allure stable plutôt que de vouloir tout rattraper d\'un coup.';
   }
   return '';
+}
+
+/** Annonce le début d'un nouveau segment d'une séance structurée
+ * (échauffement, effort, récupération, retour au calme). */
+export function phraseSegment(segment) {
+  const allureTexte = segment.allureCibleSecParKm ? `, allure cible ${formatAllure(segment.allureCibleSecParKm)}` : ', allure libre';
+  const repTexte = segment.numeroRepetition ? ` numéro ${segment.numeroRepetition} sur ${segment.totalRepetitions}` : '';
+
+  if (segment.type === 'echauffement') return `Échauffement${allureTexte}.`;
+  if (segment.type === 'effort') return `Top, effort${repTexte}${allureTexte} !`;
+  if (segment.type === 'recuperation') return `Récupération${repTexte}, ralentis.`;
+  if (segment.type === 'retour_au_calme') return 'Retour au calme, ralentis progressivement.';
+  return '';
+}
+
+export function phraseFinSeance() {
+  return 'Séance terminée, bravo pour ce travail !';
 }

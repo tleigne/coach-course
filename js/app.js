@@ -14,6 +14,8 @@ import {
   phraseAvanceRetard,
   phraseRapportAllure,
   phraseFaisabilite,
+  phraseSegment,
+  phraseFinSeance,
   deviterGenreVoix,
 } from './coach.js';
 import {
@@ -29,6 +31,13 @@ import {
 import { evaluerFaisabilite } from './profil.js';
 import { sauvegarderCourse, listerCourses, viderHistorique } from './historique.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
+import {
+  genererSeanceSeuil,
+  genererSeanceTempo,
+  genererSeanceVMA,
+  genererSeanceFractionnePersonnalise,
+  SuiviSeance,
+} from './seances.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
 const INTERVALLE_RAPPORT_MS = 150000; // rapport d'allure / avance-retard : ~2,5 min
@@ -71,6 +80,7 @@ let derniereTraceEnregistree = []; // positions GPS de la dernière course termi
 let verrouEcran = null; // Wake Lock actif pendant la course, pour empêcher l'écran de s'éteindre
 let pointsInteretAnnonces = new Set(); // index des points d'intérêt déjà annoncés pendant la course
 const SEUIL_ANNONCE_POINT_INTERET_M = 300;
+let suiviSeance = null; // suivi du segment courant si l'objectif est une séance structurée
 
 /** Empêche l'écran de s'éteindre/se verrouiller automatiquement pendant la
  * course (sans quoi le GPS et la voix peuvent être suspendus par le
@@ -266,6 +276,7 @@ const blocs = {
   temps: document.getElementById('bloc-temps'),
   allure: document.getElementById('bloc-allure'),
   effort: document.getElementById('bloc-effort'),
+  seance: document.getElementById('bloc-seance'),
 };
 
 radiosObjectif.forEach((radio) => {
@@ -274,7 +285,63 @@ radiosObjectif.forEach((radio) => {
   });
 });
 
+const sousBlocsSeance = {
+  seuil: document.getElementById('sous-bloc-seuil'),
+  tempo: document.getElementById('sous-bloc-tempo'),
+  vma: document.getElementById('sous-bloc-vma'),
+  fractionne: document.getElementById('sous-bloc-fractionne'),
+};
+
+document.querySelectorAll('input[name="type-seance"]').forEach((radio) => {
+  radio.addEventListener('change', () => {
+    Object.entries(sousBlocsSeance).forEach(([cle, el]) => el.classList.toggle('cache', cle !== radio.value));
+  });
+});
+
 const zoneErreurObjectif = document.getElementById('erreur-objectif');
+
+/** Construit la séance choisie à partir du sous-formulaire. Retourne
+ * { seance } ou { erreur } (message destiné à l'utilisateur). */
+function construireSeanceDepuisFormulaire() {
+  const typeSeance = document.querySelector('input[name="type-seance"]:checked').value;
+
+  if (typeSeance === 'seuil') {
+    const dureeMin = parseInt(document.getElementById('seuil-duree-min').value, 10);
+    if (!dureeMin || dureeMin <= 0) return { erreur: "Indique une durée d'effort valide." };
+    return { seance: genererSeanceSeuil(dureeMin) };
+  }
+
+  if (typeSeance === 'tempo') {
+    const dureeMin = parseInt(document.getElementById('tempo-duree-min').value, 10);
+    if (!dureeMin || dureeMin <= 0) return { erreur: "Indique une durée d'effort valide." };
+    return { seance: genererSeanceTempo(dureeMin) };
+  }
+
+  if (typeSeance === 'vma') {
+    const repetitions = parseInt(document.getElementById('vma-repetitions').value, 10);
+    const dureeEffortSec = parseInt(document.getElementById('vma-effort-sec').value, 10);
+    const dureeRecupSec = parseInt(document.getElementById('vma-recup-sec').value, 10);
+    if (!repetitions || repetitions <= 0 || !dureeEffortSec || dureeEffortSec <= 0 || !dureeRecupSec || dureeRecupSec <= 0) {
+      return { erreur: 'Indique un nombre de répétitions et des durées valides.' };
+    }
+    return { seance: genererSeanceVMA(repetitions, dureeEffortSec, dureeRecupSec) };
+  }
+
+  // typeSeance === 'fractionne'
+  const repetitions = parseInt(document.getElementById('fractionne-repetitions').value, 10);
+  const distanceEffortM = parseInt(document.getElementById('fractionne-distance-m').value, 10);
+  const distanceRecupM = parseInt(document.getElementById('fractionne-recup-m').value, 10);
+  const allureTexte = document.getElementById('fractionne-allure').value;
+  const allureCibleSecParKm = allureTexte ? parseAllure(allureTexte) : null;
+
+  if (!repetitions || repetitions <= 0 || !distanceEffortM || distanceEffortM <= 0 || !distanceRecupM || distanceRecupM <= 0) {
+    return { erreur: 'Indique un nombre de répétitions et des distances valides.' };
+  }
+  if (allureTexte && !allureCibleSecParKm) {
+    return { erreur: "L'allure cible n'est pas valide (ex : 4:30)." };
+  }
+  return { seance: genererSeanceFractionnePersonnalise(repetitions, distanceEffortM, allureCibleSecParKm, distanceRecupM) };
+}
 
 document.getElementById('bouton-demarrer-course').addEventListener('click', () => {
   const typeChoisi = document.querySelector('input[name="type-objectif"]:checked').value;
@@ -296,6 +363,13 @@ document.getElementById('bouton-demarrer-course').addEventListener('click', () =
       return;
     }
     objectif.paceCibleSecParKm = secParKm;
+  } else if (typeChoisi === 'seance') {
+    const resultat = construireSeanceDepuisFormulaire();
+    if (resultat.erreur) {
+      zoneErreurObjectif.textContent = resultat.erreur;
+      return;
+    }
+    objectif.seance = resultat.seance;
   }
 
   etat.objectif = objectif;
@@ -336,7 +410,9 @@ function demarrerCourse() {
     },
   };
 
-  document.getElementById('course-ecart-ligne').classList.toggle('cache', etat.objectif.type === 'effort');
+  const enSeance = etat.objectif.type === 'seance';
+  document.getElementById('course-ecart-ligne').classList.toggle('cache', etat.objectif.type === 'effort' || enSeance);
+  document.getElementById('segment-seance').classList.toggle('cache', !enSeance);
   boutonPause.textContent = 'Pause';
   afficherEcran('course');
 
@@ -346,6 +422,14 @@ function demarrerCourse() {
       etat.parcours.points,
       'marqueur-position-course'
     );
+  }
+
+  if (enSeance) {
+    suiviSeance = new SuiviSeance(etat.objectif.seance);
+    renderSegmentSeance();
+    coach.parler(phraseSegment(suiviSeance.segmentActuel()));
+  } else {
+    suiviSeance = null;
   }
 
   tracker = new SuiviGPS({
@@ -359,6 +443,7 @@ function demarrerCourse() {
     if (!etat.course.enPause) {
       etat.course.tempsEcouleSec += 1;
       renderCourse();
+      if (suiviSeance) avancerSeance();
     }
   }, 1000);
 
@@ -367,6 +452,52 @@ function demarrerCourse() {
   }, 20000);
 
   renderCourse();
+}
+
+/** Vérifie si la séance passe au segment suivant, et gère l'annonce +
+ * l'affichage si c'est le cas. Appelé à chaque tick du chrono. */
+function avancerSeance() {
+  const transition = suiviSeance.mettreAJour(etat.course.distanceParcourueKm, etat.course.tempsEcouleSec);
+  if (!transition) {
+    renderSegmentSeance();
+    return;
+  }
+  if (transition.fin) {
+    coach.parler(phraseFinSeance());
+    document.getElementById('segment-seance').classList.add('cache');
+    return;
+  }
+  coach.parler(phraseSegment(transition.segment), { prioritaire: true });
+  renderSegmentSeance();
+}
+
+const TEXTE_TYPE_SEGMENT = {
+  echauffement: 'Échauffement',
+  effort: 'Effort',
+  recuperation: 'Récupération',
+  retour_au_calme: 'Retour au calme',
+};
+
+function renderSegmentSeance() {
+  if (!suiviSeance) return;
+  const segment = suiviSeance.segmentActuel();
+  if (!segment) return;
+
+  document.getElementById('segment-seance-type').textContent = TEXTE_TYPE_SEGMENT[segment.type] || segment.type;
+
+  document.getElementById('segment-seance-repetition').textContent = segment.numeroRepetition
+    ? `Répétition ${segment.numeroRepetition} / ${segment.totalRepetitions}`
+    : '';
+
+  document.getElementById('segment-seance-allure').textContent = segment.allureCibleSecParKm
+    ? `Allure cible : ${formatAllure(segment.allureCibleSecParKm)}`
+    : 'Allure libre';
+
+  const reste = suiviSeance.resteDansSegment(etat.course.distanceParcourueKm, etat.course.tempsEcouleSec);
+  document.getElementById('segment-seance-reste').textContent =
+    segment.mode === 'distance'
+      ? `Reste : ${formatDistance(reste)}`
+      : `Reste : ${formatDuree(reste)}`;
 }
 
 function surMiseAJourGPS(etatGPS) {
@@ -454,9 +585,12 @@ function tickCoaching() {
   const maintenant = Date.now();
   const c = etat.course.derniereMajCoaching;
 
-  const objectifChiffre = etat.objectif.type !== 'effort';
+  // Pendant une séance structurée, le coaching de segment (voir avancerSeance)
+  // remplace déjà le rapport d'allure générique : pas besoin de le répéter ici.
+  const enSeance = etat.objectif.type === 'seance';
+  const objectifChiffre = !enSeance && etat.objectif.type !== 'effort';
 
-  if (objectifChiffre && maintenant - c.rapport > INTERVALLE_RAPPORT_MS) {
+  if (!enSeance && objectifChiffre && maintenant - c.rapport > INTERVALLE_RAPPORT_MS) {
     const ecart = calculerEcartSec();
     let message = phraseAvanceRetard(ecart);
     const niveauFaisabilite = calculerFaisabilite(ecart);
@@ -465,7 +599,7 @@ function tickCoaching() {
     c.rapport = maintenant;
     return;
   }
-  if (!objectifChiffre && maintenant - c.rapport > INTERVALLE_RAPPORT_MS) {
+  if (!enSeance && !objectifChiffre && maintenant - c.rapport > INTERVALLE_RAPPORT_MS) {
     coach.parler(phraseRapportAllure(formatAllure(etat.course.allureSecParKm)));
     c.rapport = maintenant;
     return;
@@ -560,6 +694,7 @@ function terminerCourse() {
   derniereTraceEnregistree = tracker ? tracker.obtenirTrace() : [];
   if (tracker) tracker.arreter();
   relacherVerrouEcran();
+  suiviSeance = null;
 
   const distanceFinale = etat.course.distanceParcourueKm;
   const dureeTexte = formatDuree(etat.course.tempsEcouleSec);
@@ -574,8 +709,11 @@ function terminerCourse() {
 
   coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), etat.course.tempsEcouleSec), { prioritaire: true });
 
+  const nomBase = etat.parcours ? etat.parcours.nom : 'Parcours';
+  const nomAvecSeance = etat.objectif && etat.objectif.type === 'seance' ? `${nomBase} (${etat.objectif.seance.nom})` : nomBase;
+
   sauvegarderCourse({
-    nomParcours: etat.parcours ? etat.parcours.nom : 'Parcours',
+    nomParcours: nomAvecSeance,
     distanceKm: distanceFinale,
     dureeSec: etat.course.tempsEcouleSec,
     allureMoyenneSecParKm: allureMoyenne,

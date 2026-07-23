@@ -101,6 +101,61 @@
       <p class="info">Le coach t'accompagnera sans comparer à un objectif de temps.</p>
     </div>
 
+    <label class="choix-objectif">
+      <input type="radio" name="type-objectif" value="seance" />
+      Séance d'entraînement structurée
+    </label>
+    <div id="bloc-seance" class="bloc-saisie cache">
+      <label class="choix-sous-type">
+        <input type="radio" name="type-seance" value="seuil" checked />
+        Seuil
+      </label>
+      <label class="choix-sous-type">
+        <input type="radio" name="type-seance" value="tempo" />
+        Tempo
+      </label>
+      <label class="choix-sous-type">
+        <input type="radio" name="type-seance" value="vma" />
+        VMA (fractionné court)
+      </label>
+      <label class="choix-sous-type">
+        <input type="radio" name="type-seance" value="fractionne" />
+        Fractionné personnalisé (ex : 4×800 m)
+      </label>
+
+      <div id="sous-bloc-seuil" class="sous-bloc-seance">
+        <label for="seuil-duree-min">Durée de l'effort (minutes)</label>
+        <input type="number" id="seuil-duree-min" value="20" min="1" inputmode="numeric" />
+      </div>
+
+      <div id="sous-bloc-tempo" class="sous-bloc-seance cache">
+        <label for="tempo-duree-min">Durée de l'effort (minutes)</label>
+        <input type="number" id="tempo-duree-min" value="20" min="1" inputmode="numeric" />
+      </div>
+
+      <div id="sous-bloc-vma" class="sous-bloc-seance cache">
+        <label for="vma-repetitions">Nombre de répétitions</label>
+        <input type="number" id="vma-repetitions" value="10" min="1" inputmode="numeric" />
+        <label for="vma-effort-sec">Durée de l'effort (secondes)</label>
+        <input type="number" id="vma-effort-sec" value="30" min="5" inputmode="numeric" />
+        <label for="vma-recup-sec">Durée de récupération (secondes)</label>
+        <input type="number" id="vma-recup-sec" value="30" min="5" inputmode="numeric" />
+      </div>
+
+      <div id="sous-bloc-fractionne" class="sous-bloc-seance cache">
+        <label for="fractionne-repetitions">Nombre de répétitions</label>
+        <input type="number" id="fractionne-repetitions" value="4" min="1" inputmode="numeric" />
+        <label for="fractionne-distance-m">Distance de l'effort (mètres)</label>
+        <input type="number" id="fractionne-distance-m" value="800" min="50" inputmode="numeric" />
+        <label for="fractionne-allure">Allure cible (optionnel, ex : 4:30)</label>
+        <input type="text" id="fractionne-allure" placeholder="laisse vide pour l'allure VMA par défaut" inputmode="numeric" />
+        <label for="fractionne-recup-m">Distance de récupération (mètres)</label>
+        <input type="number" id="fractionne-recup-m" value="400" min="50" inputmode="numeric" />
+      </div>
+
+      <p class="info">Un échauffement de 10 minutes et un retour au calme de 5 minutes sont ajoutés automatiquement.</p>
+    </div>
+
     <p class="info">
       L'appli va te demander l'autorisation d'accéder à ta position GPS, et de
       parler à voix haute : c'est nécessaire pour le coaching pendant la course.
@@ -117,6 +172,13 @@
       <span class="etape-indicateur">Étape 3 sur 3 · en course</span>
     </div>
     <p class="rappel-ecran-allume">Garde l'écran allumé pendant la course pour ne pas interrompre le coaching (si tu verrouilles le téléphone, l'appli se met en pause).</p>
+    <div id="segment-seance" class="segment-seance cache">
+      <span id="segment-seance-type" class="segment-seance-type">Effort</span>
+      <span id="segment-seance-repetition"></span>
+      <span id="segment-seance-allure"></span>
+      <span id="segment-seance-reste"></span>
+    </div>
+
     <div class="gros-chiffre">
       <span id="course-distance">0,00 km</span>
       <span class="etiquette">distance</span>
