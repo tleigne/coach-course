@@ -169,8 +169,21 @@ accès Strava disponible côté outillage de développement, puis figées dans
 `js/profil.js`. À recalculer manuellement si le profil de forme évolue
 nettement.
 
-## Déjà identifié (V2/V3, pas encore fait)
-- Audio en arrière-plan, écran éteint, téléphone en poche.
+## Fait (partiellement) — 2026-07-23 : audio en arrière-plan, écran éteint
+
+Amélioration best-effort ajoutée : un son silencieux (WAV minimal généré en
+base64, `js/audio-silence.js`, zéro dépendance) est joué en boucle pendant
+la course, avec des métadonnées `MediaSession` — ça fait considérer l'appli
+par Android/Chrome comme un lecteur média actif, ce qui aide à continuer
+d'exécuter le GPS et la voix quand l'écran s'éteint ou que l'appli passe en
+arrière-plan. Complète le Wake Lock existant (qui ne fonctionne que si la
+page reste visible).
+
+**Limite honnête à garder en tête** : ce n'est pas une garantie absolue.
+Un verrouillage complet du téléphone (bouton power) reste une limite native
+des PWA — seule une vraie appli native avec un "foreground service" peut
+le garantir à 100%. À confirmer par un test réel de Thibault en conditions
+de course (écran éteint quelques minutes).
 
 ~~Ravitaillements et points clés géolocalisés sur le parcours~~ — fait le
 22/07 (points d'intérêt extraits des waypoints GPX/KML, voir plus bas).
