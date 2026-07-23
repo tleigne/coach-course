@@ -15,6 +15,27 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-23 : refonte visuelle « haut de gamme »
+
+Demande du 23/07 (« que peux tu proposer d'autre pour que l'appli soit
+haut de gamme ? »), avec clarification importante : pas de framework
+Angular JS (l'appli reste volontairement zéro dépendance, voir principe
+ci-dessus) — « angular » au sens design = formes géométriques. Réalisé :
+- Icônes vectorielles (SVG intégré, sprite `<symbol>` dans index.html,
+  aucune bibliothèque d'icônes externe) sur les boutons de navigation,
+  pause/lecture, thème, historique, chronomètre, réglages, export GPX.
+- Accents angulaires (coins coupés en biseau via `clip-path`) sur les
+  boutons principaux et le badge de segment de séance, contrastés avec
+  des cartes toujours arrondies ailleurs pour garder un rendu chaleureux
+  plutôt que froid/technique (demande explicite : « friendly et sexy »).
+- Dégradé chaud orange → rose (`--accent-vif`) sur les boutons d'action,
+  vérifié dans les deux thèmes (contraste conservé en thème clair).
+- Retour tactile (légère réduction d'échelle au clic) sur tous les
+  boutons, typographie resserrée sur les gros chiffres (distance/temps).
+- Testé en local sur les écrans import, réglages (thème + voix),
+  chronomètre (bascule des icônes lecture/pause/réinitialiser),
+  historique et le thème clair — aucune erreur console.
+
 ## Fait — 2026-07-23 : séances d'entraînement structurées
 
 Demande du 22/07, réalisée le 23/07. Un objectif de course peut maintenant

@@ -21,6 +21,26 @@
 </head>
 <body>
 
+<svg style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="icon-historique" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4" /><polyline points="3 4 3 9 8 9" /><polyline points="12 8 12 13 16 15" /></symbol>
+    <symbol id="icon-chrono" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" /><line x1="12" y1="13" x2="12" y2="9" /><line x1="12" y1="13" x2="15" y2="14.5" /><line x1="9" y1="3" x2="15" y2="3" /><line x1="12" y1="3" x2="12" y2="5" /></symbol>
+    <symbol id="icon-reglages" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6" /><circle cx="9" cy="6" r="2" /><line x1="4" y1="12" x2="20" y2="12" /><circle cx="16" cy="12" r="2" /><line x1="4" y1="18" x2="20" y2="18" /><circle cx="11" cy="18" r="2" /></symbol>
+    <symbol id="icon-retour" viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19" /></symbol>
+    <symbol id="icon-suivant" viewBox="0 0 24 24"><polyline points="9 5 16 12 9 19" /></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><line x1="9" y1="5" x2="9" y2="19" /><line x1="15" y1="5" x2="15" y2="19" /></symbol>
+    <symbol id="icon-lecture" viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20" fill="currentColor" stroke="none" /></symbol>
+    <symbol id="icon-terminer" viewBox="0 0 24 24"><line x1="5" y1="21" x2="5" y2="3" /><path d="M5 4h13l-3 4 3 4H5" /></symbol>
+    <symbol id="icon-telecharger" viewBox="0 0 24 24"><path d="M12 4v11" /><polyline points="7 11 12 16 17 11" /><line x1="4" y1="20" x2="20" y2="20" /></symbol>
+    <symbol id="icon-nouvelle-course" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" /><polyline points="18 3 18 7 14 7" /><polyline points="6 21 6 17 10 17" /></symbol>
+    <symbol id="icon-supprimer" viewBox="0 0 24 24"><polyline points="4 7 20 7" /><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13" /><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" /></symbol>
+    <symbol id="icon-soleil" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="4" /><line x1="12" y1="20" x2="12" y2="22" /><line x1="4" y1="12" x2="2" y2="12" /><line x1="22" y1="12" x2="20" y2="12" /><line x1="5" y1="5" x2="6.5" y2="6.5" /><line x1="17.5" y1="17.5" x2="19" y2="19" /><line x1="19" y1="5" x2="17.5" y2="6.5" /><line x1="6.5" y1="17.5" x2="5" y2="19" /></symbol>
+    <symbol id="icon-lune" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></symbol>
+    <symbol id="icon-auto" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18" x2="13" y2="18" /></symbol>
+    <symbol id="icon-haut-parleur" viewBox="0 0 24 24"><polygon points="4 9 8 9 13 4 13 20 8 15 4 15" /><path d="M17 8a5 5 0 0 1 0 8" /><path d="M19.5 5.5a9 9 0 0 1 0 13" /></symbol>
+  </defs>
+</svg>
+
 <main id="app">
 
   <div id="bandeau-installation" class="bandeau-installation cache">
@@ -39,14 +59,14 @@
     <h1>Coach Course</h1>
     <p class="sous-titre">Importe ton parcours pour commencer.</p>
 
-    <label class="bouton-principal" for="fichier-gpx">Choisir un fichier de parcours</label>
+    <label class="bouton-principal" for="fichier-gpx"><svg class="icone" aria-hidden="true"><use href="#icon-telecharger"></use></svg><span>Choisir un fichier de parcours</span></label>
     <input type="file" id="fichier-gpx" hidden />
     <p class="info">Formats acceptés : GPX, KML, KMZ (export Google Maps / My Maps).</p>
 
     <div class="boutons-secondaires-import">
-      <button id="bouton-voir-historique" class="bouton-texte">Voir mes courses précédentes</button>
-      <button id="bouton-voir-chrono" class="bouton-texte">Chronomètre</button>
-      <button id="bouton-voir-reglages" class="bouton-texte">Réglages</button>
+      <button id="bouton-voir-historique" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-historique"></use></svg><span>Voir mes courses précédentes</span></button>
+      <button id="bouton-voir-chrono" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-chrono"></use></svg><span>Chronomètre</span></button>
+      <button id="bouton-voir-reglages" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-reglages"></use></svg><span>Réglages</span></button>
     </div>
 
     <p id="erreur-import" class="erreur"></p>
@@ -60,7 +80,7 @@
       </div>
       <div id="trace-parcours" class="trace"></div>
       <div id="profil-parcours" class="profil"></div>
-      <button id="bouton-continuer-objectif" class="bouton-principal">Continuer</button>
+      <button id="bouton-continuer-objectif" class="bouton-principal"><span>Continuer</span><svg class="icone" aria-hidden="true"><use href="#icon-suivant"></use></svg></button>
     </div>
 
     <footer class="pied-page">
@@ -73,7 +93,7 @@
   <!-- ÉCRAN 2 : CHOIX DE L'OBJECTIF -->
   <section id="ecran-objectif" class="ecran">
     <div class="entete-etape">
-      <button id="bouton-retour-import" class="bouton-retour-ecran" aria-label="Retour">←</button>
+      <button id="bouton-retour-import" class="bouton-retour-ecran" aria-label="Retour"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg></button>
       <span class="etape-indicateur">Étape 2 sur 3</span>
     </div>
     <h1>Ton objectif</h1>
@@ -164,7 +184,7 @@
 
     <p id="erreur-objectif" class="erreur"></p>
 
-    <button id="bouton-demarrer-course" class="bouton-principal bouton-demarrer">Démarrer la course</button>
+    <button id="bouton-demarrer-course" class="bouton-principal bouton-demarrer"><svg class="icone" aria-hidden="true"><use href="#icon-lecture"></use></svg><span>Démarrer la course</span></button>
   </section>
 
   <!-- ÉCRAN 3 : COURSE EN COURS -->
@@ -206,8 +226,8 @@
     <p id="course-gps-etat" class="info-gps">GPS : recherche du signal...</p>
 
     <div class="boutons-course">
-      <button id="bouton-pause" class="bouton-secondaire">Pause</button>
-      <button id="bouton-terminer" class="bouton-danger">Terminer</button>
+      <button id="bouton-pause" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use id="bouton-pause-icone" href="#icon-pause"></use></svg><span class="texte-bouton">Pause</span></button>
+      <button id="bouton-terminer" class="bouton-danger"><svg class="icone" aria-hidden="true"><use href="#icon-terminer"></use></svg><span>Terminer</span></button>
     </div>
   </section>
 
@@ -221,16 +241,16 @@
         <div><span class="valeur" id="resume-allure-moyenne"></span><span class="etiquette">allure moy.</span></div>
       </div>
     </div>
-    <button id="bouton-telecharger-gpx" class="bouton-secondaire">Télécharger le GPX (pour Strava)</button>
-    <button id="bouton-nouvelle-course" class="bouton-principal">Nouvelle course</button>
+    <button id="bouton-telecharger-gpx" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-telecharger"></use></svg><span>Télécharger le GPX (pour Strava)</span></button>
+    <button id="bouton-nouvelle-course" class="bouton-principal"><svg class="icone" aria-hidden="true"><use href="#icon-nouvelle-course"></use></svg><span>Nouvelle course</span></button>
   </section>
 
   <!-- ÉCRAN 5 : HISTORIQUE DES COURSES -->
   <section id="ecran-historique" class="ecran">
     <h1>Mes courses</h1>
     <div id="liste-historique"></div>
-    <button id="bouton-vider-historique" class="bouton-texte">Vider l'historique</button>
-    <button id="bouton-retour-historique" class="bouton-secondaire">Retour</button>
+    <button id="bouton-vider-historique" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-supprimer"></use></svg><span>Vider l'historique</span></button>
+    <button id="bouton-retour-historique" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
   </section>
 
   <!-- ÉCRAN 6 : RÉGLAGES -->
@@ -239,16 +259,16 @@
 
     <h2 class="titre-section-reglages">Thème</h2>
     <div class="choix-theme" id="choix-theme">
-      <button class="bouton-choix" data-theme-valeur="sombre">Sombre</button>
-      <button class="bouton-choix" data-theme-valeur="clair">Clair</button>
-      <button class="bouton-choix" data-theme-valeur="systeme">Système</button>
+      <button class="bouton-choix" data-theme-valeur="sombre"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-lune"></use></svg><span>Sombre</span></button>
+      <button class="bouton-choix" data-theme-valeur="clair"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-soleil"></use></svg><span>Clair</span></button>
+      <button class="bouton-choix" data-theme-valeur="systeme"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-auto"></use></svg><span>Système</span></button>
     </div>
 
     <h2 class="titre-section-reglages">Voix du coach</h2>
     <p class="info">Les voix disponibles dépendent de ton téléphone. Appuie sur « Tester » pour les écouter avant de choisir.</p>
     <div id="liste-voix"></div>
 
-    <button id="bouton-retour-reglages" class="bouton-secondaire">Retour</button>
+    <button id="bouton-retour-reglages" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
   </section>
 
   <!-- ÉCRAN 7 : CHRONOMÈTRE -->
@@ -261,13 +281,13 @@
     </div>
 
     <div class="boutons-course">
-      <button id="bouton-chrono-demarrer" class="bouton-principal">Démarrer</button>
-      <button id="bouton-chrono-tour" class="bouton-secondaire" disabled>Tour</button>
+      <button id="bouton-chrono-demarrer" class="bouton-principal"><svg class="icone" aria-hidden="true"><use id="bouton-chrono-demarrer-icone" href="#icon-lecture"></use></svg><span class="texte-bouton">Démarrer</span></button>
+      <button id="bouton-chrono-tour" class="bouton-secondaire" disabled><svg class="icone" aria-hidden="true"><use id="bouton-chrono-tour-icone" href="#icon-terminer"></use></svg><span class="texte-bouton">Tour</span></button>
     </div>
 
     <div id="liste-tours" class="liste-tours"></div>
 
-    <button id="bouton-retour-chrono" class="bouton-secondaire">Retour</button>
+    <button id="bouton-retour-chrono" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
   </section>
 
 </main>

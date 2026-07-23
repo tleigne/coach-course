@@ -475,6 +475,8 @@ const elCourseTemps = document.getElementById('course-temps');
 const elCourseEcart = document.getElementById('course-ecart');
 const elCourseGpsEtat = document.getElementById('course-gps-etat');
 const boutonPause = document.getElementById('bouton-pause');
+const boutonPauseTexte = boutonPause.querySelector('.texte-bouton');
+const boutonPauseIcone = document.getElementById('bouton-pause-icone');
 
 function demarrerCourse() {
   if (etat.course.enCours) return; // évite un double-démarrage (double-clic / double-tap)
@@ -500,7 +502,8 @@ function demarrerCourse() {
   const enSeance = etat.objectif.type === 'seance';
   document.getElementById('course-ecart-ligne').classList.toggle('cache', etat.objectif.type === 'effort' || enSeance);
   document.getElementById('segment-seance').classList.toggle('cache', !enSeance);
-  boutonPause.textContent = 'Pause';
+  boutonPauseTexte.textContent = 'Pause';
+  boutonPauseIcone.setAttribute('href', '#icon-pause');
   afficherEcran('course');
 
   if (projecteurParcours) {
@@ -761,11 +764,13 @@ boutonPause.addEventListener('click', () => {
   etat.course.enPause = !etat.course.enPause;
   if (etat.course.enPause) {
     tracker.mettreEnPause();
-    boutonPause.textContent = 'Reprendre';
+    boutonPauseTexte.textContent = 'Reprendre';
+    boutonPauseIcone.setAttribute('href', '#icon-lecture');
     coach.parler('Course en pause.');
   } else {
     tracker.reprendre();
-    boutonPause.textContent = 'Pause';
+    boutonPauseTexte.textContent = 'Pause';
+    boutonPauseIcone.setAttribute('href', '#icon-pause');
     coach.parler('Reprise de la course.');
   }
 });
@@ -945,7 +950,7 @@ function afficherListeVoix() {
         <div class="voix-item${estActive ? ' selectionne' : ''}">
           <span class="voix-item-nom">${echapperHTML(v.name)}${etiquetteGenre}</span>
           <div class="voix-item-boutons">
-            <button data-action="tester" data-voix="${echapperHTML(v.name)}">Tester</button>
+            <button data-action="tester" data-voix="${echapperHTML(v.name)}"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-haut-parleur"></use></svg><span>Tester</span></button>
             <button data-action="choisir" data-voix="${echapperHTML(v.name)}">${estActive ? 'Choisie' : 'Choisir'}</button>
           </div>
         </div>
@@ -974,6 +979,10 @@ let idIntervalleChronometre = null;
 const elChronoTemps = document.getElementById('chrono-temps');
 const boutonChronoDemarrer = document.getElementById('bouton-chrono-demarrer');
 const boutonChronoTour = document.getElementById('bouton-chrono-tour');
+const boutonChronoDemarrerTexte = boutonChronoDemarrer.querySelector('.texte-bouton');
+const boutonChronoDemarrerIcone = document.getElementById('bouton-chrono-demarrer-icone');
+const boutonChronoTourTexte = boutonChronoTour.querySelector('.texte-bouton');
+const boutonChronoTourIcone = document.getElementById('bouton-chrono-tour-icone');
 
 function rafraichirAffichageChrono() {
   elChronoTemps.textContent = formatChrono(chrono.tempsEcouleMs());
@@ -981,16 +990,22 @@ function rafraichirAffichageChrono() {
 
 function mettreAJourBoutonsChrono() {
   if (chrono.etat === 'en_cours') {
-    boutonChronoDemarrer.textContent = 'Pause';
-    boutonChronoTour.textContent = 'Tour';
+    boutonChronoDemarrerTexte.textContent = 'Pause';
+    boutonChronoDemarrerIcone.setAttribute('href', '#icon-pause');
+    boutonChronoTourTexte.textContent = 'Tour';
+    boutonChronoTourIcone.setAttribute('href', '#icon-terminer');
     boutonChronoTour.disabled = false;
   } else if (chrono.etat === 'pause') {
-    boutonChronoDemarrer.textContent = 'Reprendre';
-    boutonChronoTour.textContent = 'Réinitialiser';
+    boutonChronoDemarrerTexte.textContent = 'Reprendre';
+    boutonChronoDemarrerIcone.setAttribute('href', '#icon-lecture');
+    boutonChronoTourTexte.textContent = 'Réinitialiser';
+    boutonChronoTourIcone.setAttribute('href', '#icon-nouvelle-course');
     boutonChronoTour.disabled = false;
   } else {
-    boutonChronoDemarrer.textContent = 'Démarrer';
-    boutonChronoTour.textContent = 'Tour';
+    boutonChronoDemarrerTexte.textContent = 'Démarrer';
+    boutonChronoDemarrerIcone.setAttribute('href', '#icon-lecture');
+    boutonChronoTourTexte.textContent = 'Tour';
+    boutonChronoTourIcone.setAttribute('href', '#icon-terminer');
     boutonChronoTour.disabled = true;
   }
 }
