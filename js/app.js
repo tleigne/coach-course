@@ -23,6 +23,7 @@ import {
   formatDuree,
   formatAllure,
   formatEcart,
+  formatChrono,
   parseHMS,
   parseAllure,
   echapperHTML,
@@ -38,6 +39,7 @@ import {
   genererSeanceFractionnePersonnalise,
   SuiviSeance,
 } from './seances.js';
+import { Chronometre } from './chronometre.js';
 
 // --- Intervalles du coaching (en millisecondes) ---
 const INTERVALLE_RAPPORT_MS = 150000; // rapport d'allure / avance-retard : ~2,5 min
@@ -121,6 +123,7 @@ const ecrans = {
   resume: document.getElementById('ecran-resume'),
   historique: document.getElementById('ecran-historique'),
   reglages: document.getElementById('ecran-reglages'),
+  chrono: document.getElementById('ecran-chrono'),
 };
 
 function afficherEcran(nom) {
@@ -263,6 +266,10 @@ document.getElementById('bouton-voir-historique').addEventListener('click', () =
 document.getElementById('bouton-voir-reglages').addEventListener('click', () => {
   afficherReglages();
   afficherEcran('reglages');
+});
+
+document.getElementById('bouton-voir-chrono').addEventListener('click', () => {
+  afficherEcran('chrono');
 });
 
 // ===================== ÉCRAN 2 : OBJECTIF =====================
@@ -922,6 +929,82 @@ function afficherListeVoix() {
     });
   });
 }
+
+// ===================== ÉCRAN 7 : CHRONOMÈTRE =====================
+// Chronomètre autonome avec tours, indépendant du GPS/parcours (utile par
+// exemple pour chronométrer manuellement des répétitions sur piste).
+
+const chrono = new Chronometre();
+let idIntervalleChronometre = null;
+
+const elChronoTemps = document.getElementById('chrono-temps');
+const boutonChronoDemarrer = document.getElementById('bouton-chrono-demarrer');
+const boutonChronoTour = document.getElementById('bouton-chrono-tour');
+
+function rafraichirAffichageChrono() {
+  elChronoTemps.textContent = formatChrono(chrono.tempsEcouleMs());
+}
+
+function mettreAJourBoutonsChrono() {
+  if (chrono.etat === 'en_cours') {
+    boutonChronoDemarrer.textContent = 'Pause';
+    boutonChronoTour.textContent = 'Tour';
+    boutonChronoTour.disabled = false;
+  } else if (chrono.etat === 'pause') {
+    boutonChronoDemarrer.textContent = 'Reprendre';
+    boutonChronoTour.textContent = 'Réinitialiser';
+    boutonChronoTour.disabled = false;
+  } else {
+    boutonChronoDemarrer.textContent = 'Démarrer';
+    boutonChronoTour.textContent = 'Tour';
+    boutonChronoTour.disabled = true;
+  }
+}
+
+function afficherTours() {
+  const conteneur = document.getElementById('liste-tours');
+  conteneur.innerHTML = chrono.tours
+    .slice()
+    .reverse()
+    .map(
+      (t) => `
+        <div class="tour-item">
+          <span class="tour-item-numero">Tour ${t.numero}</span>
+          <span class="tour-item-temps">${formatChrono(t.tempsTourMs)}</span>
+          <span class="tour-item-cumule">${formatChrono(t.tempsCumuleMs)}</span>
+        </div>
+      `
+    )
+    .join('');
+}
+
+boutonChronoDemarrer.addEventListener('click', () => {
+  if (chrono.etat === 'en_cours') {
+    chrono.mettreEnPause();
+    clearInterval(idIntervalleChronometre);
+    rafraichirAffichageChrono();
+  } else {
+    chrono.demarrer();
+    idIntervalleChronometre = setInterval(rafraichirAffichageChrono, 100);
+  }
+  mettreAJourBoutonsChrono();
+});
+
+boutonChronoTour.addEventListener('click', () => {
+  if (chrono.etat === 'en_cours') {
+    chrono.enregistrerTour();
+    afficherTours();
+  } else if (chrono.etat === 'pause') {
+    chrono.reinitialiser();
+    rafraichirAffichageChrono();
+    afficherTours();
+    mettreAJourBoutonsChrono();
+  }
+});
+
+document.getElementById('bouton-retour-chrono').addEventListener('click', () => {
+  afficherEcran('import');
+});
 
 // ===================== SERVICE WORKER =====================
 

@@ -45,6 +45,7 @@
 
     <div class="boutons-secondaires-import">
       <button id="bouton-voir-historique" class="bouton-texte">Voir mes courses précédentes</button>
+      <button id="bouton-voir-chrono" class="bouton-texte">Chronomètre</button>
       <button id="bouton-voir-reglages" class="bouton-texte">Réglages</button>
     </div>
 
@@ -248,6 +249,25 @@
     <div id="liste-voix"></div>
 
     <button id="bouton-retour-reglages" class="bouton-secondaire">Retour</button>
+  </section>
+
+  <!-- ÉCRAN 7 : CHRONOMÈTRE -->
+  <section id="ecran-chrono" class="ecran">
+    <h1>Chronomètre</h1>
+    <p class="sous-titre">Indépendant du parcours : utile par exemple sur piste.</p>
+
+    <div class="gros-chiffre">
+      <span id="chrono-temps" aria-live="polite">0:00.0</span>
+    </div>
+
+    <div class="boutons-course">
+      <button id="bouton-chrono-demarrer" class="bouton-principal">Démarrer</button>
+      <button id="bouton-chrono-tour" class="bouton-secondaire" disabled>Tour</button>
+    </div>
+
+    <div id="liste-tours" class="liste-tours"></div>
+
+    <button id="bouton-retour-chrono" class="bouton-secondaire">Retour</button>
   </section>
 
 </main>

@@ -26,6 +26,21 @@ export function formatDistance(km) {
   return `${km.toFixed(2).replace('.', ',')} km`;
 }
 
+/** Formate une durée en millisecondes pour un chronomètre : "m:ss.d" ou
+ * "h:mm:ss.d", avec un dixième de seconde (précision d'affichage courante
+ * pour un chronomètre, sans prétendre à une précision GPS/matérielle réelle). */
+export function formatChrono(ms) {
+  ms = Math.max(0, Math.round(ms));
+  const dixiemes = Math.floor((ms % 1000) / 100);
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = String(m).padStart(2, '0');
+  const ss = String(s).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}.${dixiemes}` : `${m}:${ss}.${dixiemes}`;
+}
+
 /** Formate une durée en secondes en "h:mm:ss" ou "m:ss". */
 export function formatDuree(sec) {
   sec = Math.max(0, Math.round(sec));

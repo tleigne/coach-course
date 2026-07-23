@@ -367,6 +367,43 @@ h1 {
   margin-top: 24px;
 }
 
+/* --- Chronomètre --- */
+
+.liste-tours {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tour-item-numero {
+  color: var(--texte-attenue);
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.tour-item-temps {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.tour-item-cumule {
+  color: var(--texte-attenue);
+  font-size: 0.85rem;
+  flex: 1;
+  text-align: right;
+}
+
 /* --- Écran objectif --- */
 
 .choix-objectif {
@@ -494,7 +531,9 @@ h1 {
 
 .boutons-secondaires-import {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 4px 12px;
 }
 
 .titre-section-reglages {
