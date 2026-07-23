@@ -300,6 +300,53 @@ document.querySelectorAll('input[name="type-seance"]').forEach((radio) => {
 
 const zoneErreurObjectif = document.getElementById('erreur-objectif');
 
+// Mémorise la dernière configuration de séance utilisée, pour éviter de tout
+// ressaisir à chaque course (ex. si Thibault refait le même 4x800m chaque semaine).
+const CLE_PREFS_SEANCE = 'coach-course-prefs-seance';
+const CHAMPS_PREFS_SEANCE = [
+  'seuil-duree-min',
+  'tempo-duree-min',
+  'vma-repetitions',
+  'vma-effort-sec',
+  'vma-recup-sec',
+  'fractionne-repetitions',
+  'fractionne-distance-m',
+  'fractionne-allure',
+  'fractionne-recup-m',
+];
+
+function sauvegarderPrefsSeance() {
+  try {
+    const prefs = { typeSeance: document.querySelector('input[name="type-seance"]:checked').value };
+    for (const id of CHAMPS_PREFS_SEANCE) prefs[id] = document.getElementById(id).value;
+    localStorage.setItem(CLE_PREFS_SEANCE, JSON.stringify(prefs));
+  } catch (e) {
+    // Stockage indisponible : la prochaine séance repartira sur les valeurs par défaut.
+  }
+}
+
+function restaurerPrefsSeance() {
+  let prefs;
+  try {
+    const brut = localStorage.getItem(CLE_PREFS_SEANCE);
+    if (!brut) return;
+    prefs = JSON.parse(brut);
+  } catch (e) {
+    return;
+  }
+
+  if (prefs.typeSeance) {
+    const radio = document.querySelector(`input[name="type-seance"][value="${prefs.typeSeance}"]`);
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change'));
+    }
+  }
+  for (const id of CHAMPS_PREFS_SEANCE) {
+    if (prefs[id]) document.getElementById(id).value = prefs[id];
+  }
+}
+
 /** Construit la séance choisie à partir du sous-formulaire. Retourne
  * { seance } ou { erreur } (message destiné à l'utilisateur). */
 function construireSeanceDepuisFormulaire() {
@@ -370,6 +417,7 @@ document.getElementById('bouton-demarrer-course').addEventListener('click', () =
       return;
     }
     objectif.seance = resultat.seance;
+    sauvegarderPrefsSeance();
   }
 
   etat.objectif = objectif;
@@ -929,6 +977,7 @@ if (!appliDejaInstallee()) {
 }
 
 appliquerTheme(themePrefereActuel());
+restaurerPrefsSeance();
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
   evenement.preventDefault();
