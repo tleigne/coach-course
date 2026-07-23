@@ -38,6 +38,7 @@
     <symbol id="icon-lune" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></symbol>
     <symbol id="icon-auto" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18" x2="13" y2="18" /></symbol>
     <symbol id="icon-haut-parleur" viewBox="0 0 24 24"><polygon points="4 9 8 9 13 4 13 20 8 15 4 15" /><path d="M17 8a5 5 0 0 1 0 8" /><path d="M19.5 5.5a9 9 0 0 1 0 13" /></symbol>
+    <symbol id="icon-seance" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /></symbol>
   </defs>
 </svg>
 
@@ -67,6 +68,7 @@
       <button id="bouton-voir-historique" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-historique"></use></svg><span>Voir mes courses précédentes</span></button>
       <button id="bouton-voir-chrono" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-chrono"></use></svg><span>Chronomètre</span></button>
       <button id="bouton-voir-reglages" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-reglages"></use></svg><span>Réglages</span></button>
+      <button id="bouton-seance-sans-parcours" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-seance"></use></svg><span>Séance sans parcours</span></button>
     </div>
 
     <p id="erreur-import" class="erreur"></p>
@@ -98,7 +100,7 @@
     </div>
     <h1>Ton objectif</h1>
 
-    <label class="choix-objectif">
+    <label class="choix-objectif" id="choix-objectif-temps">
       <input type="radio" name="type-objectif" value="temps" checked />
       Temps cible sur tout le parcours
     </label>

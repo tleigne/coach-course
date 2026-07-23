@@ -285,8 +285,11 @@ function genererProfilSVG(points) {
   </svg>`;
 }
 
+const choixObjectifTemps = document.getElementById('choix-objectif-temps');
+
 document.getElementById('bouton-continuer-objectif').addEventListener('click', () => {
   if (!etat.parcours) return;
+  choixObjectifTemps.classList.remove('cache');
   afficherEcran('objectif');
 });
 
@@ -302,6 +305,20 @@ document.getElementById('bouton-voir-reglages').addEventListener('click', () => 
 
 document.getElementById('bouton-voir-chrono').addEventListener('click', () => {
   afficherEcran('chrono');
+});
+
+// Les séances structurées (seuil/tempo/VMA/fractionné) se basent sur le temps
+// et la distance parcourue en direct (GPS), pas sur un tracé précis : elles
+// n'ont donc pas besoin d'un fichier de parcours importé. « Temps cible sur
+// tout le parcours » reste caché ici car il a besoin d'une distance totale
+// connue à l'avance.
+document.getElementById('bouton-seance-sans-parcours').addEventListener('click', () => {
+  etat.parcours = null;
+  projecteurParcours = null;
+  blocResumeParcours.classList.add('cache');
+  choixObjectifTemps.classList.add('cache');
+  document.querySelector('input[name="type-objectif"][value="seance"]').click();
+  afficherEcran('objectif');
 });
 
 // ===================== ÉCRAN 2 : OBJECTIF =====================

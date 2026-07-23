@@ -15,6 +15,20 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-23 : séance structurée sans fichier de parcours
+
+Bug remonté par Thibault : l'écran objectif (et donc les séances Seuil/
+Tempo/VMA/Fractionné) n'était accessible qu'après avoir importé un GPX,
+alors que ces séances se basent uniquement sur le temps/la distance en
+direct (GPS) et non sur un tracé précis — elles n'ont donc jamais eu
+besoin d'un fichier importé. Ajout d'un bouton « Séance sans parcours »
+sur l'écran d'import (aux côtés d'Historique/Chronomètre/Réglages) qui
+amène directement à l'écran objectif avec « Séance d'entraînement
+structurée » présélectionnée ; le choix « Temps cible sur tout le
+parcours » (seul objectif qui a vraiment besoin d'une distance totale
+connue) est caché dans ce cas précis. Testé en local : démarrage,
+affichage du segment (échauffement), et fin de course sans erreur.
+
 ## Fait — 2026-07-23 : refonte visuelle « haut de gamme »
 
 Demande du 23/07 (« que peux tu proposer d'autre pour que l'appli soit
