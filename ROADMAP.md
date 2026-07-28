@@ -15,6 +15,19 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-28 : totaux et suppression course par course
+
+Deux manques de l'écran historique :
+- **Totaux en tête** : nombre de courses, distance cumulée et temps
+  total passé à courir (`totauxHistorique` dans `js/historique.js`).
+- **Suppression course par course** : jusqu'ici on ne pouvait que tout
+  vider d'un coup. Chaque course a maintenant sa corbeille, avec
+  confirmation nommant la course concernée.
+- Testé en local : suppression de la bonne entrée (vérifié que la
+  seconde reste), mise à jour immédiate des totaux et du singulier/
+  pluriel, addition correcte sur des valeurs réelles (12,5 + 8,25 + 5
+  = 25,75 km / 2:10:00), aucune erreur console.
+
 ## Fait — 2026-07-28 : nommage de l'historique + « Refaire cette séance »
 
 Deux finitions à la suite du raccourci « Séance sans parcours » :

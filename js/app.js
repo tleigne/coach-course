@@ -30,7 +30,7 @@ import {
   distanceHaversine,
 } from './utils.js';
 import { evaluerFaisabilite } from './profil.js';
-import { sauvegarderCourse, listerCourses, viderHistorique } from './historique.js';
+import { sauvegarderCourse, listerCourses, supprimerCourse, totauxHistorique, viderHistorique } from './historique.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 import {
   genererSeanceSeuil,
@@ -892,7 +892,16 @@ function afficherHistorique() {
     return;
   }
 
-  conteneur.innerHTML = courses
+  const totaux = totauxHistorique();
+  const enteteTotaux = `
+    <div class="historique-totaux">
+      <div><span class="valeur">${totaux.nombre}</span><span class="etiquette">course${totaux.nombre > 1 ? 's' : ''}</span></div>
+      <div><span class="valeur">${formatDistance(totaux.distanceKm)}</span><span class="etiquette">au total</span></div>
+      <div><span class="valeur">${formatDuree(totaux.dureeSec)}</span><span class="etiquette">de course</span></div>
+    </div>
+  `;
+
+  conteneur.innerHTML = enteteTotaux + courses
     .map((c, index) => {
       const date = new Date(c.date);
       const dateTexte = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -915,6 +924,9 @@ function afficherHistorique() {
           <div class="course-historique-stats">
             <span class="valeur">${formatDistance(c.distanceKm)}</span><br>
             <span class="etiquette">${formatDuree(c.dureeSec)} · ${formatAllure(c.allureMoyenneSecParKm)}</span>
+            <button class="bouton-supprimer-course" data-index="${index}" aria-label="Supprimer cette course">
+              <svg class="icone icone-petite" aria-hidden="true"><use href="#icon-supprimer"></use></svg>
+            </button>
           </div>
         </div>
       `;
@@ -926,6 +938,17 @@ function afficherHistorique() {
 // formulaire et on repart directement sur l'écran objectif, sans parcours
 // (une séance n'en a pas besoin, voir le raccourci « Séance sans parcours »).
 document.getElementById('liste-historique').addEventListener('click', (evenement) => {
+  const boutonSupprimer = evenement.target.closest('.bouton-supprimer-course');
+  if (boutonSupprimer) {
+    const index = Number(boutonSupprimer.dataset.index);
+    const course = listerCourses()[index];
+    if (!course) return;
+    if (!confirm(`Supprimer définitivement « ${course.nomParcours} » ?`)) return;
+    supprimerCourse(index);
+    afficherHistorique();
+    return;
+  }
+
   const bouton = evenement.target.closest('.bouton-refaire');
   if (!bouton) return;
 

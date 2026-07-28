@@ -23,6 +23,30 @@ export function listerCourses() {
   }
 }
 
+/** Supprime une seule course, repérée par sa position dans la liste
+ * retournée par listerCourses(). */
+export function supprimerCourse(index) {
+  const historique = listerCourses();
+  if (index < 0 || index >= historique.length) return;
+  historique.splice(index, 1);
+  try {
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(historique));
+  } catch (e) {
+    // Stockage indisponible : la suppression ne sera pas conservée.
+  }
+}
+
+/** Totaux affichés en tête de l'historique. Les courses sans distance
+ * exploitable (ex. GPS jamais capté) comptent quand même comme une course. */
+export function totauxHistorique() {
+  const courses = listerCourses();
+  return {
+    nombre: courses.length,
+    distanceKm: courses.reduce((somme, c) => somme + (c.distanceKm || 0), 0),
+    dureeSec: courses.reduce((somme, c) => somme + (c.dureeSec || 0), 0),
+  };
+}
+
 export function viderHistorique() {
   try {
     localStorage.removeItem(CLE_STOCKAGE);
