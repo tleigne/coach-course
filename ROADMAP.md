@@ -15,6 +15,48 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-28 : records personnels et écran de progression
+
+Demande de Thibault : meilleurs temps sur les distances usuelles et un
+graphique de progression, dans deux menus séparés.
+
+**Records** (`js/records.js`, écran « Mes records ») — 400 m, 800 m,
+1500 m, 3 km, 5 km, 10 km, semi et marathon. Comme sur Strava ou une
+montre de sport, on ne regarde pas seulement les courses faisant pile
+la distance : on cherche la portion la plus rapide *à l'intérieur* de
+chaque course (un 5 km rapide au milieu d'une sortie de 12 km compte).
+Algorithme en fenêtre glissante avec interpolation entre points GPS,
+sinon un point tous les 15 m fausserait un record sur 400 m.
+
+**Prérequis technique** : le résumé de course (distance + durée) ne
+suffit pas pour ça. `SuiviGPS` enregistre désormais un profil
+distance/temps, conservé avec chaque course. Le temps compté est le
+temps *actif* : après une reprise de pause, `dernierPointAccepte` est
+remis à null, donc le trou de la pause n'est jamais additionné.
+Conséquence à assumer : **les records ne se calculent qu'à partir des
+courses faites après cette version** — les anciennes n'ont pas ce
+profil et sont ignorées (pas de plantage, écran d'attente dédié).
+
+**Poids en stockage** : le profil est échantillonné (~1 point tous les
+15 m ou 2 s, plafonné à 1200 points) → 18 Ko pour 1 h de course, ~900 Ko
+pour 50 courses, contre ~4,5 Mo sans échantillonnage (au-delà de la
+limite de localStorage). Vérifié que cet allègement coûte au maximum
+0,07 s de précision sur les records. Si le stockage sature malgré tout,
+`sauvegarderCourse` retire les profils des courses les plus anciennes
+un par un plutôt que de perdre la course qui vient d'être courue.
+
+**Progression** (écran « Ma progression ») — graphique en barres SVG
+(zéro dépendance, comme le reste) des distances par course, avec
+filtres 7 jours / 1 mois / 3 mois et les totaux de la période.
+
+**Tests** : l'algorithme de records a été comparé à une implémentation
+naïve de référence (toutes les paires de points) sur 300 courses
+aléatoires × 5 distances = 1500 comparaisons, zéro écart. Vérifié aussi
+sur des cas connus à l'avance (allure constante, course accélérée où le
+record doit se trouver dans la 2e moitié), et sur les cas limites :
+historique vide, course sans GPS (0 km), anciennes courses sans profil.
+Aucune erreur console.
+
 ## Fait — 2026-07-28 : totaux et suppression course par course
 
 Deux manques de l'écran historique :

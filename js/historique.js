@@ -6,10 +6,31 @@ const MAX_COURSES_CONSERVEES = 50;
 export function sauvegarderCourse(resume) {
   const historique = listerCourses();
   historique.unshift({ ...resume, date: new Date().toISOString() });
+  const courses = historique.slice(0, MAX_COURSES_CONSERVEES);
+
+  if (ecrire(courses)) return;
+
+  // Le profil distance/temps (utile aux records) est de loin la partie la plus
+  // volumineuse. Si le stockage sature, on préfère perdre les profils des
+  // courses les plus anciennes plutôt que la course qui vient d'être courue :
+  // on les retire une par une, de la plus ancienne à la plus récente.
+  for (let i = courses.length - 1; i > 0; i--) {
+    if (!courses[i].profil) continue;
+    courses[i] = { ...courses[i], profil: null };
+    if (ecrire(courses)) return;
+  }
+
+  // En dernier recours, on enregistre au moins le résumé de la course actuelle.
+  ecrire(courses.map((c) => ({ ...c, profil: null })));
+}
+
+function ecrire(courses) {
   try {
-    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(historique.slice(0, MAX_COURSES_CONSERVEES)));
+    localStorage.setItem(CLE_STOCKAGE, JSON.stringify(courses));
+    return true;
   } catch (e) {
-    // Stockage plein ou indisponible (navigation privée, etc.) : l'appli continue sans historique.
+    // Stockage plein ou indisponible (navigation privée, etc.).
+    return false;
   }
 }
 
@@ -45,6 +66,21 @@ export function totauxHistorique() {
     distanceKm: courses.reduce((somme, c) => somme + (c.distanceKm || 0), 0),
     dureeSec: courses.reduce((somme, c) => somme + (c.dureeSec || 0), 0),
   };
+}
+
+export const PERIODES = {
+  semaine: { nom: '7 jours', jours: 7 },
+  mois: { nom: '1 mois', jours: 30 },
+  trimestre: { nom: '3 mois', jours: 90 },
+};
+
+/** Courses des `jours` derniers jours, de la plus ancienne à la plus récente
+ * (sens naturel de lecture d'un graphique de progression). */
+export function coursesSurPeriode(jours) {
+  const debut = Date.now() - jours * 24 * 60 * 60 * 1000;
+  return listerCourses()
+    .filter((c) => new Date(c.date).getTime() >= debut)
+    .reverse();
 }
 
 export function viderHistorique() {

@@ -475,6 +475,128 @@ h1 {
   margin-top: 24px;
 }
 
+/* --- Records personnels --- */
+
+#liste-records {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.record-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(160deg, var(--fond-carte), var(--fond-carte) 65%, rgba(255, 61, 104, 0.06));
+  border: 1px solid var(--bordure);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  padding: 14px 16px;
+}
+
+.record-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.record-distance {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.record-temps {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-barre {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bordure);
+  overflow: hidden;
+}
+
+.record-barre span {
+  display: block;
+  height: 100%;
+  background-image: linear-gradient(90deg, var(--accent), var(--accent-vif));
+}
+
+.record-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--texte-attenue);
+  font-size: 0.8rem;
+}
+
+.record-details span:last-child {
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-vide {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  opacity: 0.55;
+}
+
+.record-attente {
+  color: var(--texte-attenue);
+  font-size: 0.8rem;
+}
+
+/* --- Progression --- */
+
+.choix-periode {
+  display: flex;
+  gap: 8px;
+}
+
+.graphique {
+  width: 100%;
+  height: 180px;
+}
+
+.graphique svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.barre-progression {
+  fill: url(#degrade-barre);
+}
+
+.degrade-haut {
+  stop-color: var(--accent-vif);
+}
+
+.degrade-bas {
+  stop-color: var(--accent);
+}
+
+.axe-progression {
+  stroke: var(--bordure);
+  stroke-width: 1;
+}
+
+.etiquette-graphique {
+  fill: var(--texte-attenue);
+  font-size: 10px;
+  font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.etiquette-fin {
+  text-anchor: end;
+}
+
 /* --- Chronomètre --- */
 
 .liste-tours {

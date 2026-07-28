@@ -30,7 +30,16 @@ import {
   distanceHaversine,
 } from './utils.js';
 import { evaluerFaisabilite } from './profil.js';
-import { sauvegarderCourse, listerCourses, supprimerCourse, totauxHistorique, viderHistorique } from './historique.js';
+import {
+  sauvegarderCourse,
+  listerCourses,
+  supprimerCourse,
+  totauxHistorique,
+  coursesSurPeriode,
+  PERIODES,
+  viderHistorique,
+} from './historique.js';
+import { calculerRecords, historiqueExploitablePourRecords } from './records.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 import {
   genererSeanceSeuil,
@@ -156,6 +165,8 @@ const ecrans = {
   historique: document.getElementById('ecran-historique'),
   reglages: document.getElementById('ecran-reglages'),
   chrono: document.getElementById('ecran-chrono'),
+  records: document.getElementById('ecran-records'),
+  progression: document.getElementById('ecran-progression'),
 };
 
 function afficherEcran(nom) {
@@ -849,6 +860,9 @@ function terminerCourse() {
     allureMoyenneSecParKm: allureMoyenne,
     // Permet de relancer la même séance en un clic depuis l'historique.
     configSeance: enSeanceTerminee ? lireConfigSeance() : null,
+    // Profil distance/temps allégé : sert à retrouver après coup les records
+    // sur 400 m, 5 km, etc. (voir js/records.js).
+    profil: tracker ? tracker.obtenirProfil() : [],
   });
 
   afficherEcran('resume');
@@ -1144,6 +1158,162 @@ boutonChronoTour.addEventListener('click', () => {
 document.getElementById('bouton-retour-chrono').addEventListener('click', () => {
   afficherEcran('import');
 });
+
+// ===================== ÉCRAN 8 : RECORDS PERSONNELS =====================
+
+document.getElementById('bouton-voir-records').addEventListener('click', () => {
+  afficherRecords();
+  afficherEcran('records');
+});
+
+document.getElementById('bouton-retour-records').addEventListener('click', () => {
+  afficherEcran('import');
+});
+
+function afficherRecords() {
+  const conteneur = document.getElementById('liste-records');
+  const courses = listerCourses();
+
+  if (!historiqueExploitablePourRecords(courses)) {
+    conteneur.innerHTML = `
+      <p class="historique-vide">
+        Aucun record pour l'instant. Ils se calculeront tout seuls à partir de
+        tes prochaines courses.
+      </p>`;
+    return;
+  }
+
+  const records = calculerRecords(courses);
+  const meilleureAllure = Math.min(
+    ...records.filter((r) => r.allureSecParKm).map((r) => r.allureSecParKm)
+  );
+
+  conteneur.innerHTML = records
+    .map((record) => {
+      if (record.tempsSec === null) {
+        return `
+          <div class="record-carte record-vide">
+            <span class="record-distance">${record.nom}</span>
+            <span class="record-attente">pas encore couru</span>
+          </div>`;
+      }
+
+      const date = new Date(record.date);
+      const dateTexte = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      // Barre indicative : plus l'allure est proche de la meilleure, plus elle
+      // est remplie. Donne une lecture visuelle immédiate des distances où
+      // Thibault est le plus rapide, sans avoir à comparer les chiffres.
+      const remplissage = Math.round((meilleureAllure / record.allureSecParKm) * 100);
+
+      return `
+        <div class="record-carte">
+          <div class="record-entete">
+            <span class="record-distance">${record.nom}</span>
+            <span class="record-temps">${formatDuree(Math.round(record.tempsSec))}</span>
+          </div>
+          <div class="record-barre"><span style="width: ${remplissage}%"></span></div>
+          <div class="record-details">
+            <span>${formatAllure(record.allureSecParKm)}</span>
+            <span>${echapperHTML(record.nomCourse)} · ${dateTexte}</span>
+          </div>
+        </div>`;
+    })
+    .join('');
+}
+
+// ===================== ÉCRAN 9 : PROGRESSION =====================
+
+let periodeProgression = 'mois';
+
+document.getElementById('bouton-voir-progression').addEventListener('click', () => {
+  afficherProgression();
+  afficherEcran('progression');
+});
+
+document.getElementById('bouton-retour-progression').addEventListener('click', () => {
+  afficherEcran('import');
+});
+
+document.querySelectorAll('#choix-periode .bouton-choix').forEach((bouton) => {
+  bouton.addEventListener('click', () => {
+    periodeProgression = bouton.dataset.periode;
+    afficherProgression();
+  });
+});
+
+function afficherProgression() {
+  document.querySelectorAll('#choix-periode .bouton-choix').forEach((bouton) => {
+    bouton.classList.toggle('selectionne', bouton.dataset.periode === periodeProgression);
+  });
+
+  const courses = coursesSurPeriode(PERIODES[periodeProgression].jours);
+  const distanceTotale = courses.reduce((somme, c) => somme + (c.distanceKm || 0), 0);
+  const dureeTotale = courses.reduce((somme, c) => somme + (c.dureeSec || 0), 0);
+
+  document.getElementById('resume-progression').innerHTML = `
+    <div class="historique-totaux">
+      <div><span class="valeur">${courses.length}</span><span class="etiquette">course${courses.length > 1 ? 's' : ''}</span></div>
+      <div><span class="valeur">${formatDistance(distanceTotale)}</span><span class="etiquette">parcourus</span></div>
+      <div><span class="valeur">${formatDuree(dureeTotale)}</span><span class="etiquette">de course</span></div>
+    </div>`;
+
+  const graphique = document.getElementById('graphique-progression');
+  graphique.innerHTML = courses.length
+    ? genererGraphiqueProgression(courses)
+    : `<p class="historique-vide">Aucune course sur cette période.</p>`;
+}
+
+/**
+ * Graphique en barres des distances par course sur la période, en SVG généré
+ * ici (pas de bibliothèque de graphiques : cohérent avec le reste de l'appli,
+ * et ça reste quelques dizaines de lignes).
+ */
+function genererGraphiqueProgression(courses) {
+  const largeur = 320;
+  const hauteur = 160;
+  const margeBas = 22; // place pour les dates sous l'axe
+  const margeHaut = 14; // place pour la valeur max
+  const hauteurUtile = hauteur - margeBas - margeHaut;
+
+  const distanceMax = Math.max(...courses.map((c) => c.distanceKm || 0), 1);
+  const largeurBarre = largeur / courses.length;
+  const epaisseur = Math.max(3, Math.min(26, largeurBarre * 0.6));
+
+  const barres = courses
+    .map((course, index) => {
+      const valeur = course.distanceKm || 0;
+      const hauteurBarre = (valeur / distanceMax) * hauteurUtile;
+      const x = index * largeurBarre + (largeurBarre - epaisseur) / 2;
+      const y = margeHaut + hauteurUtile - hauteurBarre;
+      const date = new Date(course.date);
+      const titre = `${date.toLocaleDateString('fr-FR')} — ${valeur.toFixed(2).replace('.', ',')} km`;
+      return `<rect class="barre-progression" x="${x.toFixed(1)}" y="${y.toFixed(1)}"
+        width="${epaisseur.toFixed(1)}" height="${Math.max(hauteurBarre, 1).toFixed(1)}" rx="2"><title>${titre}</title></rect>`;
+    })
+    .join('');
+
+  // On n'étiquette que la première et la dernière date : au-delà, les dates se
+  // chevauchent dès qu'il y a plus de quelques courses.
+  const premiere = new Date(courses[0].date);
+  const derniere = new Date(courses[courses.length - 1].date);
+  const formatCourt = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+  const memeDate = formatCourt(premiere) === formatCourt(derniere);
+
+  return `<svg viewBox="0 0 ${largeur} ${hauteur}" preserveAspectRatio="none" role="img"
+      aria-label="Distances parcourues sur la période, une barre par course">
+    <defs>
+      <linearGradient id="degrade-barre" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" class="degrade-haut" />
+        <stop offset="100%" class="degrade-bas" />
+      </linearGradient>
+    </defs>
+    <line class="axe-progression" x1="0" y1="${margeHaut + hauteurUtile}" x2="${largeur}" y2="${margeHaut + hauteurUtile}" />
+    ${barres}
+    <text class="etiquette-graphique" x="0" y="10">${distanceMax.toFixed(1).replace('.', ',')} km</text>
+    <text class="etiquette-graphique" x="0" y="${hauteur - 6}">${formatCourt(premiere)}</text>
+    ${memeDate ? '' : `<text class="etiquette-graphique etiquette-fin" x="${largeur}" y="${hauteur - 6}">${formatCourt(derniere)}</text>`}
+  </svg>`;
+}
 
 // ===================== SERVICE WORKER =====================
 

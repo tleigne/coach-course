@@ -39,6 +39,8 @@
     <symbol id="icon-auto" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18" x2="13" y2="18" /></symbol>
     <symbol id="icon-haut-parleur" viewBox="0 0 24 24"><polygon points="4 9 8 9 13 4 13 20 8 15 4 15" /><path d="M17 8a5 5 0 0 1 0 8" /><path d="M19.5 5.5a9 9 0 0 1 0 13" /></symbol>
     <symbol id="icon-seance" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /></symbol>
+    <symbol id="icon-record" viewBox="0 0 24 24"><path d="M8 3h8v5a4 4 0 0 1-8 0z" /><path d="M8 5H5v2a3 3 0 0 0 3 3" /><path d="M16 5h3v2a3 3 0 0 1-3 3" /><line x1="12" y1="12" x2="12" y2="16" /><path d="M8 21h8l-1-5H9z" /></symbol>
+    <symbol id="icon-progression" viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7" /><polyline points="15 7 21 7 21 13" /></symbol>
   </defs>
 </svg>
 
@@ -69,6 +71,8 @@
       <button id="bouton-voir-chrono" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-chrono"></use></svg><span>Chronomètre</span></button>
       <button id="bouton-voir-reglages" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-reglages"></use></svg><span>Réglages</span></button>
       <button id="bouton-seance-sans-parcours" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-seance"></use></svg><span>Séance sans parcours</span></button>
+      <button id="bouton-voir-records" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-record"></use></svg><span>Mes records</span></button>
+      <button id="bouton-voir-progression" class="bouton-texte"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-progression"></use></svg><span>Ma progression</span></button>
     </div>
 
     <p id="erreur-import" class="erreur"></p>
@@ -290,6 +294,30 @@
     <div id="liste-tours" class="liste-tours"></div>
 
     <button id="bouton-retour-chrono" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
+  </section>
+
+  <!-- ÉCRAN 8 : RECORDS PERSONNELS -->
+  <section id="ecran-records" class="ecran">
+    <h1>Mes records</h1>
+    <p class="sous-titre">Tes meilleurs temps sur les distances classiques, retrouvés à l'intérieur de tes courses.</p>
+    <div id="liste-records"></div>
+    <button id="bouton-retour-records" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
+  </section>
+
+  <!-- ÉCRAN 9 : PROGRESSION -->
+  <section id="ecran-progression" class="ecran">
+    <h1>Ma progression</h1>
+
+    <div class="choix-periode" id="choix-periode">
+      <button class="bouton-choix" data-periode="semaine">7 jours</button>
+      <button class="bouton-choix" data-periode="mois">1 mois</button>
+      <button class="bouton-choix" data-periode="trimestre">3 mois</button>
+    </div>
+
+    <div id="resume-progression"></div>
+    <div id="graphique-progression" class="graphique"></div>
+
+    <button id="bouton-retour-progression" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
   </section>
 
 </main>
