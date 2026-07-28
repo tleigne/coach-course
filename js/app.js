@@ -371,35 +371,44 @@ const CHAMPS_PREFS_SEANCE = [
   'fractionne-recup-m',
 ];
 
-function sauvegarderPrefsSeance() {
-  try {
-    const prefs = { typeSeance: document.querySelector('input[name="type-seance"]:checked').value };
-    for (const id of CHAMPS_PREFS_SEANCE) prefs[id] = document.getElementById(id).value;
-    localStorage.setItem(CLE_PREFS_SEANCE, JSON.stringify(prefs));
-  } catch (e) {
-    // Stockage indisponible : la prochaine séance repartira sur les valeurs par défaut.
-  }
+/** Photographie la configuration de séance actuellement saisie dans le
+ * formulaire (type + tous les champs), sous une forme sérialisable. */
+function lireConfigSeance() {
+  const config = { typeSeance: document.querySelector('input[name="type-seance"]:checked').value };
+  for (const id of CHAMPS_PREFS_SEANCE) config[id] = document.getElementById(id).value;
+  return config;
 }
 
-function restaurerPrefsSeance() {
-  let prefs;
-  try {
-    const brut = localStorage.getItem(CLE_PREFS_SEANCE);
-    if (!brut) return;
-    prefs = JSON.parse(brut);
-  } catch (e) {
-    return;
-  }
-
-  if (prefs.typeSeance) {
-    const radio = document.querySelector(`input[name="type-seance"][value="${prefs.typeSeance}"]`);
+/** Réinjecte une configuration de séance dans le formulaire. */
+function appliquerConfigSeance(config) {
+  if (!config) return;
+  if (config.typeSeance) {
+    const radio = document.querySelector(`input[name="type-seance"][value="${config.typeSeance}"]`);
     if (radio) {
       radio.checked = true;
       radio.dispatchEvent(new Event('change'));
     }
   }
   for (const id of CHAMPS_PREFS_SEANCE) {
-    if (prefs[id]) document.getElementById(id).value = prefs[id];
+    if (config[id]) document.getElementById(id).value = config[id];
+  }
+}
+
+function sauvegarderPrefsSeance() {
+  try {
+    localStorage.setItem(CLE_PREFS_SEANCE, JSON.stringify(lireConfigSeance()));
+  } catch (e) {
+    // Stockage indisponible : la prochaine séance repartira sur les valeurs par défaut.
+  }
+}
+
+function restaurerPrefsSeance() {
+  try {
+    const brut = localStorage.getItem(CLE_PREFS_SEANCE);
+    if (!brut) return;
+    appliquerConfigSeance(JSON.parse(brut));
+  } catch (e) {
+    // Préférences illisibles : on garde les valeurs par défaut du formulaire.
   }
 }
 
@@ -820,14 +829,26 @@ function terminerCourse() {
 
   coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), etat.course.tempsEcouleSec), { prioritaire: true });
 
-  const nomBase = etat.parcours ? etat.parcours.nom : 'Parcours';
-  const nomAvecSeance = etat.objectif && etat.objectif.type === 'seance' ? `${nomBase} (${etat.objectif.seance.nom})` : nomBase;
+  // Une séance peut se courir sans parcours importé : dans ce cas le nom de la
+  // séance suffit (afficher « Parcours (Seuil 20 min) » serait trompeur).
+  const enSeanceTerminee = etat.objectif && etat.objectif.type === 'seance';
+  const nomParcours = etat.parcours ? etat.parcours.nom : null;
+  let nomCourseHistorique;
+  if (enSeanceTerminee) {
+    nomCourseHistorique = nomParcours
+      ? `${nomParcours} (${etat.objectif.seance.nom})`
+      : etat.objectif.seance.nom;
+  } else {
+    nomCourseHistorique = nomParcours || 'Course libre';
+  }
 
   sauvegarderCourse({
-    nomParcours: nomAvecSeance,
+    nomParcours: nomCourseHistorique,
     distanceKm: distanceFinale,
     dureeSec: etat.course.tempsEcouleSec,
     allureMoyenneSecParKm: allureMoyenne,
+    // Permet de relancer la même séance en un clic depuis l'historique.
+    configSeance: enSeanceTerminee ? lireConfigSeance() : null,
   });
 
   afficherEcran('resume');
@@ -872,15 +893,24 @@ function afficherHistorique() {
   }
 
   conteneur.innerHTML = courses
-    .map((c) => {
+    .map((c, index) => {
       const date = new Date(c.date);
       const dateTexte = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
       const heureTexte = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      // Les courses enregistrées avant cette fonctionnalité n'ont pas de
+      // configSeance : on n'affiche « Refaire » que si on sait quoi relancer.
+      const boutonRefaire = c.configSeance
+        ? `<button class="bouton-refaire" data-index="${index}">
+             <svg class="icone icone-petite" aria-hidden="true"><use href="#icon-nouvelle-course"></use></svg>
+             <span>Refaire cette séance</span>
+           </button>`
+        : '';
       return `
         <div class="course-historique">
           <div class="course-historique-details">
             <h3>${echapperHTML(c.nomParcours)}</h3>
             <p>${dateTexte} à ${heureTexte}</p>
+            ${boutonRefaire}
           </div>
           <div class="course-historique-stats">
             <span class="valeur">${formatDistance(c.distanceKm)}</span><br>
@@ -891,6 +921,26 @@ function afficherHistorique() {
     })
     .join('');
 }
+
+// Relance une séance déjà réalisée : on réinjecte sa configuration dans le
+// formulaire et on repart directement sur l'écran objectif, sans parcours
+// (une séance n'en a pas besoin, voir le raccourci « Séance sans parcours »).
+document.getElementById('liste-historique').addEventListener('click', (evenement) => {
+  const bouton = evenement.target.closest('.bouton-refaire');
+  if (!bouton) return;
+
+  const course = listerCourses()[Number(bouton.dataset.index)];
+  if (!course || !course.configSeance) return;
+
+  appliquerConfigSeance(course.configSeance);
+  etat.parcours = null;
+  projecteurParcours = null;
+  inputFichier.value = '';
+  blocResumeParcours.classList.add('cache');
+  choixObjectifTemps.classList.add('cache');
+  document.querySelector('input[name="type-objectif"][value="seance"]').click();
+  afficherEcran('objectif');
+});
 
 // ===================== ÉCRAN 6 : RÉGLAGES =====================
 

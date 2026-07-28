@@ -15,6 +15,27 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-28 : nommage de l'historique + « Refaire cette séance »
+
+Deux finitions à la suite du raccourci « Séance sans parcours » :
+- **Nommage** : une séance courue sans parcours s'enregistrait sous
+  « Parcours (Seuil 20 min) », alors qu'il n'y avait pas de parcours.
+  Elle s'appelle maintenant simplement « Seuil 20 min ». Une course
+  libre sans parcours ni séance s'appelle « Course libre » (au lieu de
+  « Parcours »). Le cas parcours + séance est inchangé.
+- **Refaire cette séance** : chaque séance enregistre désormais sa
+  configuration complète (type + tous les champs du formulaire). Un
+  bouton dans l'historique la réinjecte et amène directement à l'écran
+  objectif, prêt à démarrer. Les courses enregistrées avant cette
+  version n'ont pas cette config : le bouton ne s'affiche simplement
+  pas pour elles (pas de plantage).
+- Au passage, la lecture/écriture de la config de séance est factorisée
+  (`lireConfigSeance` / `appliquerConfigSeance`), partagée entre les
+  préférences mémorisées et le rejeu depuis l'historique.
+- Testé en local : les 3 cas de nommage, le rejeu (avec formulaire
+  volontairement modifié avant, pour vérifier qu'il est bien restauré),
+  aucune erreur console.
+
 ## Fait — 2026-07-23 : séance structurée sans fichier de parcours
 
 Bug remonté par Thibault : l'écran objectif (et donc les séances Seuil/
