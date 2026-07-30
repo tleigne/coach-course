@@ -10,6 +10,7 @@
   --accent-vif: #ff3d68;
   --accent-vert: #2ecc71;
   --texte: #f5f5f5;
+  --texte-fort: #ffffff; /* contraste maximal, pour l'écran lu en courant */
   --texte-attenue: #9aa4af;
   --erreur: #ff5c5c;
   --bordure: #2a323c;
@@ -22,6 +23,7 @@
   --accent-vif: #9c1f45;
   --accent-vert: #1e8e3e;
   --texte: #14181f;
+  --texte-fort: #000000;
   --texte-attenue: #5b6472;
   --erreur: #c8322a;
   --bordure: #d8dde3;
@@ -35,6 +37,7 @@
     --accent-vif: #9c1f45;
     --accent-vert: #1e8e3e;
     --texte: #14181f;
+    --texte-fort: #000000;
     --texte-attenue: #5b6472;
     --erreur: #c8322a;
     --bordure: #d8dde3;
@@ -758,6 +761,20 @@ h1 {
   text-anchor: end;
 }
 
+.ligne-allure {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.point-allure {
+  fill: var(--accent-vif);
+  vector-effect: non-scaling-stroke;
+}
+
 /* --- Chronomètre --- */
 
 .liste-tours {
@@ -859,25 +876,58 @@ h1 {
 
 .gros-chiffre span:first-child {
   display: block;
-  font-size: 4rem;
+  font-size: 4.6rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
-  line-height: 1.05;
+  line-height: 1;
+}
+
+/* Pendant l'effort, on lit ces chiffres en une fraction de seconde, en
+   bougeant et souvent en plein soleil : les valeurs prennent tout le
+   contraste disponible, et les libellés s'effacent au maximum. */
+#ecran-course .gros-chiffre span:first-child,
+#ecran-course .valeur-moyenne {
+  color: var(--texte-fort, var(--texte));
+}
+
+#ecran-course .etiquette {
+  font-size: 0.7rem;
+  opacity: 0.75;
 }
 
 .ligne-stats {
   display: flex;
   justify-content: space-around;
   text-align: center;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--bordure);
+  border-bottom: 1px solid var(--bordure);
+}
+
+.ligne-stats > div {
+  flex: 1;
+}
+
+.ligne-stats > div + div {
+  border-left: 1px solid var(--bordure);
 }
 
 .valeur-moyenne {
   display: block;
-  font-size: 2rem;
+  font-size: 2.4rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* Boutons de course : cibles larges, à viser en courant, avec des doigts
+   moites ou gantés. */
+#ecran-course .boutons-course button {
+  padding: 20px 16px;
+  font-size: 1.15rem;
 }
 
 .ligne-ecart {
@@ -924,11 +974,71 @@ h1 {
   font-size: 0.9rem;
 }
 
-.boutons-secondaires-import {
+/* --- Tuiles de l'accueil --- */
+
+.grille-tuiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tuile {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 1;
+  padding: 10px 6px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  color: var(--texte);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+/* La séance libre est une action, pas une consultation : on la distingue
+   des autres tuiles pour qu'elle se repère tout de suite. */
+.tuile-accent {
+  border: 2px solid var(--accent);
+  background: linear-gradient(160deg, var(--fond-carte), rgba(255, 61, 104, 0.1));
+  color: var(--accent);
+}
+
+.icone-tuile {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tuile:not(.tuile-accent) .icone-tuile {
+  color: var(--accent);
+}
+
+@media (hover: hover) {
+  .tuile:hover {
+    border-color: var(--accent);
+  }
+}
+
+/* --- En-tête commun des écrans secondaires --- */
+
+.entete-ecran {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.entete-ecran h1 {
+  margin: 0;
 }
 
 .titre-section-reglages {

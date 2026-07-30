@@ -15,6 +15,35 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-28 (fin) : refonte design & UX
+
+Constat de départ : l'accueil était passé de 3 à 6 liens soulignés
+identiques au fil des ajouts, sans que la mise en page ne suive — ça
+ressemblait à une page web, pas à une application.
+
+- **Accueil en tuiles** : les 6 liens deviennent une grille 3×2 de tuiles
+  carrées (icône + libellé court). La tuile « Séance libre » est accentuée
+  car c'est une action, là où les autres sont des consultations.
+- **Navigation unifiée** : flèche retour en haut à gauche sur *tous* les
+  écrans secondaires (historique, records, progression, chrono, réglages),
+  au lieu d'un bouton « Retour » en bas. Les identifiants des boutons ont
+  été conservés à l'identique pour ne rien casser côté JavaScript.
+- **Courbe d'allure** sur l'écran Progression, en plus des distances.
+  Point de conception : **l'axe est inversé** — une allure plus rapide est
+  dessinée plus haut, pour que « la courbe monte » signifie « je
+  progresse ». Sans ça, s'améliorer ferait plonger la courbe.
+- **Écran de course plus lisible** : chiffres plus grands (4,6 rem),
+  nouvelle variable `--texte-fort` (blanc pur / noir pur) pour le contraste
+  maximal, allure et temps séparés par des filets, libellés effacés, et
+  boutons Pause/Terminer agrandis (cibles tactiles en courant).
+
+**Tests** : les 6 tuiles et les 5 flèches retour vérifiées une par une
+(bon écran atteint, bon retour), courbe d'allure validée sur une
+progression réelle (l'axe inversé fait bien monter la courbe), cas limites
+(une seule course, courses sans GPS, allures identiques → pas de division
+par zéro), et les deux thèmes contrôlés sur les nouveaux éléments. Rendu
+vérifié en format téléphone. Aucune erreur console.
+
 ## Fait — 2026-07-28 (suite) : sauvegarde, splits, records vocaux, objectif hebdo
 
 Quatre ajouts ne nécessitant aucune action de Thibault (ni compte, ni

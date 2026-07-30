@@ -1406,6 +1406,69 @@ function afficherProgression() {
   graphique.innerHTML = courses.length
     ? genererGraphiqueProgression(courses)
     : `<p class="historique-vide">Aucune course sur cette période.</p>`;
+
+  // L'allure n'a de sens que pour les courses où le GPS a effectivement
+  // mesuré quelque chose : une course à 0 km donnerait une allure absurde.
+  const avecAllure = courses.filter((c) => c.allureMoyenneSecParKm > 0 && c.distanceKm > 0);
+  document.getElementById('graphique-allure').innerHTML =
+    avecAllure.length >= 2
+      ? genererGraphiqueAllure(avecAllure)
+      : `<p class="historique-vide">Il faut au moins deux courses mesurées pour voir une tendance.</p>`;
+}
+
+/**
+ * Courbe de l'allure moyenne au fil des courses. L'axe est inversé par
+ * rapport à l'intuition d'un graphique classique : une allure *plus petite*
+ * (donc plus rapide) est dessinée *plus haut*, pour que « la courbe monte »
+ * veuille dire « je progresse ». Sans ça, s'améliorer ferait plonger la
+ * courbe, ce qui se lit comme une régression.
+ */
+function genererGraphiqueAllure(courses) {
+  const largeur = 320;
+  const hauteur = 150;
+  const margeBas = 22;
+  const margeHaut = 16;
+  const hauteurUtile = hauteur - margeBas - margeHaut;
+
+  const allures = courses.map((c) => c.allureMoyenneSecParKm);
+  const plusRapide = Math.min(...allures);
+  const plusLente = Math.max(...allures);
+  // Marge pour que les points extrêmes ne collent pas aux bords.
+  const amplitude = plusLente - plusRapide || 60;
+  const bas = plusLente + amplitude * 0.15;
+  const haut = plusRapide - amplitude * 0.15;
+
+  const positionY = (allure) => margeHaut + ((allure - haut) / (bas - haut)) * hauteurUtile;
+  const positionX = (index) =>
+    courses.length === 1 ? largeur / 2 : (index / (courses.length - 1)) * largeur;
+
+  const points = courses
+    .map((c, i) => `${positionX(i).toFixed(1)},${positionY(c.allureMoyenneSecParKm).toFixed(1)}`)
+    .join(' ');
+
+  const pastilles = courses
+    .map((c, i) => {
+      const date = new Date(c.date);
+      const titre = `${date.toLocaleDateString('fr-FR')} — ${formatAllure(c.allureMoyenneSecParKm)}`;
+      return `<circle class="point-allure" cx="${positionX(i).toFixed(1)}" cy="${positionY(
+        c.allureMoyenneSecParKm
+      ).toFixed(1)}" r="3.5"><title>${titre}</title></circle>`;
+    })
+    .join('');
+
+  const formatCourt = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+  const premiere = new Date(courses[0].date);
+  const derniere = new Date(courses[courses.length - 1].date);
+  const memeDate = formatCourt(premiere) === formatCourt(derniere);
+
+  return `<svg viewBox="0 0 ${largeur} ${hauteur}" preserveAspectRatio="none" role="img"
+      aria-label="Allure moyenne au fil des courses, du plus lent en bas au plus rapide en haut">
+    <polyline class="ligne-allure" points="${points}" />
+    ${pastilles}
+    <text class="etiquette-graphique" x="0" y="11">${formatAllure(plusRapide)} (le plus rapide)</text>
+    <text class="etiquette-graphique" x="0" y="${hauteur - 6}">${formatCourt(premiere)}</text>
+    ${memeDate ? '' : `<text class="etiquette-graphique etiquette-fin" x="${largeur}" y="${hauteur - 6}">${formatCourt(derniere)}</text>`}
+  </svg>`;
 }
 
 /** Jauge de l'objectif hebdomadaire, si Thibault en a fixé un dans les
