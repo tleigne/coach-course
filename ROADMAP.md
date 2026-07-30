@@ -15,6 +15,46 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-28 (suite) : sauvegarde, splits, records vocaux, objectif hebdo
+
+Quatre ajouts ne nécessitant aucune action de Thibault (ni compte, ni
+paiement) :
+
+**Sauvegarde des données** (écran Réglages) — export de tout l'historique
+en fichier JSON, et restauration. Répond à un risque réel devenu plus
+lourd depuis les records : tout vit dans `localStorage`, donc un nettoyage
+du navigateur ou un changement de téléphone effacerait des semaines de
+données. Le fichier importé venant de l'extérieur, `restaurerSauvegarde`
+valide la structure champ par champ et ne recopie que les champs attendus
+avec le bon type (`nettoyerCourse`) : un fichier corrompu ou étranger ne
+peut pas casser l'historique existant. Vérifié que l'échappement HTML
+existant neutralise bien un nom de course malveillant venu d'un fichier.
+
+**Temps par kilomètre** (écran de fin) — `calculerSplitsParKm` dans
+`js/records.js`, avec interpolation entre points GPS. Le dernier km,
+presque toujours partiel, est marqué comme tel avec sa distance réelle
+plutôt que d'afficher un temps au km trompeur. Barre proportionnelle à la
+vitesse pour voir d'un coup d'œil où la course a accéléré ou faibli.
+
+**Annonce vocale des records** — `detecterNouveauxRecords` compare la
+course qui vient de finir aux records précédents. Deux points d'attention :
+la comparaison se fait **avant** l'enregistrement (sinon la course se
+comparerait à elle-même), et une distance jamais courue auparavant ne
+compte pas comme un record — sans quoi la toute première course
+annoncerait fièrement huit records d'un coup.
+
+**Objectif hebdomadaire** — réglable dans Réglages, jauge sur l'écran
+Progression. Semaine civile (depuis lundi) et non 7 jours glissants : un
+objectif hebdomadaire se remet à zéro le lundi.
+
+**Tests** : splits validés sur une course à allures connues (5:00 / 4:00 /
+6:00 + 400 m partiel), détection de records sur 5 cas (première course,
+plus rapide, plus lente, plus courte, gains chiffrés), aller-retour
+complet de la sauvegarde (noms, profils, config de séance et objectif tous
+préservés), 7 cas de fichiers invalides tous rejetés sans abîmer
+l'historique, et un test de bout en bout avec un GPS simulé (900 positions)
+qui exerce toute la chaîne. Aucune erreur console.
+
 ## Fait — 2026-07-28 : records personnels et écran de progression
 
 Demande de Thibault : meilleurs temps sur les distances usuelles et un

@@ -16,6 +16,7 @@ import {
   phraseFaisabilite,
   phraseSegment,
   phraseFinSeance,
+  phraseNouveauxRecords,
   deviterGenreVoix,
 } from './coach.js';
 import {
@@ -38,8 +39,18 @@ import {
   coursesSurPeriode,
   PERIODES,
   viderHistorique,
+  lireObjectifHebdo,
+  ecrireObjectifHebdo,
+  distanceSemaineEnCours,
+  genererSauvegarde,
+  restaurerSauvegarde,
 } from './historique.js';
-import { calculerRecords, historiqueExploitablePourRecords } from './records.js';
+import {
+  calculerRecords,
+  historiqueExploitablePourRecords,
+  calculerSplitsParKm,
+  detecterNouveauxRecords,
+} from './records.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 import {
   genererSeanceSeuil,
@@ -838,7 +849,17 @@ function terminerCourse() {
   const boutonTelecharger = document.getElementById('bouton-telecharger-gpx');
   boutonTelecharger.disabled = derniereTraceEnregistree.length < 2;
 
+  const profilCourse = tracker ? tracker.obtenirProfil() : [];
+
+  // Records : la comparaison doit se faire AVANT d'enregistrer la course,
+  // sinon elle se retrouverait comparée à elle-même et ne battrait jamais rien.
+  const nouveauxRecords = detecterNouveauxRecords(profilCourse, listerCourses());
+
+  afficherSplits(profilCourse);
+  afficherRecordsDeLaCourse(nouveauxRecords);
+
   coach.parler(phraseFin(distanceFinale.toFixed(2).replace('.', ','), etat.course.tempsEcouleSec), { prioritaire: true });
+  if (nouveauxRecords.length > 0) coach.parler(phraseNouveauxRecords(nouveauxRecords));
 
   // Une séance peut se courir sans parcours importé : dans ce cas le nom de la
   // séance suffit (afficher « Parcours (Seuil 20 min) » serait trompeur).
@@ -862,7 +883,7 @@ function terminerCourse() {
     configSeance: enSeanceTerminee ? lireConfigSeance() : null,
     // Profil distance/temps allégé : sert à retrouver après coup les records
     // sur 400 m, 5 km, etc. (voir js/records.js).
-    profil: tracker ? tracker.obtenirProfil() : [],
+    profil: profilCourse,
   });
 
   afficherEcran('resume');
@@ -876,6 +897,70 @@ document.getElementById('bouton-telecharger-gpx').addEventListener('click', () =
 });
 
 // ===================== ÉCRAN 4 : RÉSUMÉ =====================
+
+/** Temps par kilomètre sur l'écran de fin de course. La barre de chaque km est
+ * proportionnelle à sa vitesse : un km rapide donne une barre longue, ce qui
+ * fait ressortir d'un coup d'œil où la course a accéléré ou faibli. */
+function afficherSplits(profil) {
+  const bloc = document.getElementById('resume-splits');
+  const splits = calculerSplitsParKm(profil);
+
+  if (splits.length === 0) {
+    bloc.classList.add('cache');
+    return;
+  }
+
+  const allureMin = Math.min(...splits.map((s) => s.allureSecParKm));
+  const allureMax = Math.max(...splits.map((s) => s.allureSecParKm));
+  const amplitude = allureMax - allureMin;
+
+  document.getElementById('liste-splits').innerHTML = splits
+    .map((split) => {
+      // 100 % pour le km le plus rapide, 40 % pour le plus lent (jamais 0,
+      // sinon la barre disparaît complètement).
+      const part = amplitude > 0 ? 1 - (split.allureSecParKm - allureMin) / amplitude : 1;
+      const largeur = Math.round(40 + part * 60);
+      const etiquette = split.partiel
+        ? `km ${split.numero} (${split.distanceKm.toFixed(2).replace('.', ',')} km)`
+        : `km ${split.numero}`;
+      return `
+        <div class="split-item">
+          <span class="split-numero">${etiquette}</span>
+          <span class="split-barre"><span style="width: ${largeur}%"></span></span>
+          <span class="split-temps">${formatDuree(Math.round(split.dureeSec))}</span>
+        </div>`;
+    })
+    .join('');
+
+  bloc.classList.remove('cache');
+}
+
+/** Met en avant les records battus pendant la course qui vient de finir. */
+function afficherRecordsDeLaCourse(records) {
+  const bloc = document.getElementById('resume-records');
+
+  if (records.length === 0) {
+    bloc.classList.add('cache');
+    return;
+  }
+
+  bloc.innerHTML = `
+    <div class="resume-records-entete">
+      <svg class="icone" aria-hidden="true"><use href="#icon-record"></use></svg>
+      <span>${records.length} nouveau${records.length > 1 ? 'x' : ''} record${records.length > 1 ? 's' : ''} !</span>
+    </div>
+    ${records
+      .map(
+        (r) => `
+        <div class="resume-record-ligne">
+          <span>${r.nom}</span>
+          <span><strong>${formatDuree(Math.round(r.tempsSec))}</strong>
+            <span class="record-gain">−${formatDuree(Math.round(r.gainSec))}</span></span>
+        </div>`
+      )
+      .join('')}`;
+  bloc.classList.remove('cache');
+}
 
 document.getElementById('bouton-nouvelle-course').addEventListener('click', () => {
   etat.parcours = null;
@@ -1032,7 +1117,65 @@ document.getElementById('bouton-retour-reglages').addEventListener('click', () =
 function afficherReglages() {
   afficherEtatTheme();
   afficherListeVoix();
+  const objectif = lireObjectifHebdo();
+  champObjectifHebdo.value = objectif > 0 ? objectif : '';
+  messageSauvegarde.textContent = '';
 }
+
+// --- Objectif hebdomadaire ---
+
+const champObjectifHebdo = document.getElementById('objectif-hebdo');
+
+champObjectifHebdo.addEventListener('change', () => {
+  const valeur = parseFloat(champObjectifHebdo.value);
+  ecrireObjectifHebdo(Number.isFinite(valeur) && valeur > 0 ? valeur : 0);
+});
+
+// --- Sauvegarde / restauration ---
+
+const messageSauvegarde = document.getElementById('message-sauvegarde');
+const inputSauvegarde = document.getElementById('fichier-sauvegarde');
+
+document.getElementById('bouton-exporter-donnees').addEventListener('click', () => {
+  const courses = listerCourses();
+  if (courses.length === 0) {
+    messageSauvegarde.textContent = "Il n'y a encore aucune course à sauvegarder.";
+    return;
+  }
+  const date = new Date().toISOString().slice(0, 10);
+  telechargerFichier(`coach-course-sauvegarde-${date}.json`, genererSauvegarde(), 'application/json');
+  messageSauvegarde.textContent = `${courses.length} course${courses.length > 1 ? 's' : ''} exportée${courses.length > 1 ? 's' : ''}. Garde ce fichier en lieu sûr.`;
+});
+
+inputSauvegarde.addEventListener('change', async () => {
+  const fichier = inputSauvegarde.files[0];
+  if (!fichier) return;
+  messageSauvegarde.textContent = '';
+
+  const existantes = listerCourses().length;
+  if (
+    existantes > 0 &&
+    !confirm(
+      `Restaurer remplacera tes ${existantes} course${existantes > 1 ? 's' : ''} actuelle${existantes > 1 ? 's' : ''} par celles de la sauvegarde. Continuer ?`
+    )
+  ) {
+    inputSauvegarde.value = '';
+    return;
+  }
+
+  try {
+    const resultat = restaurerSauvegarde(await fichier.text());
+    messageSauvegarde.textContent = resultat.erreur
+      ? resultat.erreur
+      : `${resultat.nombre} course${resultat.nombre > 1 ? 's' : ''} restaurée${resultat.nombre > 1 ? 's' : ''}.`;
+    if (!resultat.erreur) {
+      champObjectifHebdo.value = lireObjectifHebdo() || '';
+    }
+  } catch (e) {
+    messageSauvegarde.textContent = "Impossible de lire ce fichier.";
+  }
+  inputSauvegarde.value = '';
+});
 
 function afficherListeVoix() {
   const conteneur = document.getElementById('liste-voix');
@@ -1246,6 +1389,8 @@ function afficherProgression() {
     bouton.classList.toggle('selectionne', bouton.dataset.periode === periodeProgression);
   });
 
+  afficherObjectifHebdo();
+
   const courses = coursesSurPeriode(PERIODES[periodeProgression].jours);
   const distanceTotale = courses.reduce((somme, c) => somme + (c.distanceKm || 0), 0);
   const dureeTotale = courses.reduce((somme, c) => somme + (c.dureeSec || 0), 0);
@@ -1261,6 +1406,37 @@ function afficherProgression() {
   graphique.innerHTML = courses.length
     ? genererGraphiqueProgression(courses)
     : `<p class="historique-vide">Aucune course sur cette période.</p>`;
+}
+
+/** Jauge de l'objectif hebdomadaire, si Thibault en a fixé un dans les
+ * réglages. La semaine est la semaine civile (depuis lundi), pas les 7
+ * derniers jours : un objectif hebdomadaire se remet à zéro le lundi. */
+function afficherObjectifHebdo() {
+  const bloc = document.getElementById('objectif-hebdo-bloc');
+  const objectif = lireObjectifHebdo();
+
+  if (objectif <= 0) {
+    bloc.classList.add('cache');
+    return;
+  }
+
+  const parcouru = distanceSemaineEnCours();
+  const pourcentage = Math.min(100, Math.round((parcouru / objectif) * 100));
+  const restant = Math.max(0, objectif - parcouru);
+  const atteint = parcouru >= objectif;
+
+  bloc.innerHTML = `
+    <div class="objectif-entete">
+      <span>Objectif de la semaine</span>
+      <span class="objectif-chiffres">${formatDistance(parcouru)} / ${objectif} km</span>
+    </div>
+    <div class="objectif-jauge${atteint ? ' atteint' : ''}"><span style="width: ${pourcentage}%"></span></div>
+    <p class="objectif-reste">${
+      atteint
+        ? '🎉 Objectif atteint, bravo !'
+        : `Encore ${formatDistance(restant)} pour y être.`
+    }</p>`;
+  bloc.classList.remove('cache');
 }
 
 /**

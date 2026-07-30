@@ -247,6 +247,13 @@
         <div><span class="valeur" id="resume-allure-moyenne"></span><span class="etiquette">allure moy.</span></div>
       </div>
     </div>
+    <div id="resume-records" class="resume-records cache"></div>
+
+    <div id="resume-splits" class="cache">
+      <h2 class="titre-section-reglages">Temps par kilomètre</h2>
+      <div id="liste-splits" class="liste-splits"></div>
+    </div>
+
     <button id="bouton-telecharger-gpx" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-telecharger"></use></svg><span>Télécharger le GPX (pour Strava)</span></button>
     <button id="bouton-nouvelle-course" class="bouton-principal"><svg class="icone" aria-hidden="true"><use href="#icon-nouvelle-course"></use></svg><span>Nouvelle course</span></button>
   </section>
@@ -270,9 +277,29 @@
       <button class="bouton-choix" data-theme-valeur="systeme"><svg class="icone icone-petite" aria-hidden="true"><use href="#icon-auto"></use></svg><span>Système</span></button>
     </div>
 
+    <h2 class="titre-section-reglages">Objectif hebdomadaire</h2>
+    <p class="info">Nombre de kilomètres visés par semaine. Laisse vide pour ne pas en fixer.</p>
+    <div class="ligne-objectif-hebdo">
+      <input type="number" id="objectif-hebdo" min="0" step="1" placeholder="ex : 40" inputmode="numeric" />
+      <span class="unite-objectif">km / semaine</span>
+    </div>
+
     <h2 class="titre-section-reglages">Voix du coach</h2>
     <p class="info">Les voix disponibles dépendent de ton téléphone. Appuie sur « Tester » pour les écouter avant de choisir.</p>
     <div id="liste-voix"></div>
+
+    <h2 class="titre-section-reglages">Sauvegarde de tes données</h2>
+    <p class="info">
+      Tes courses et tes records sont enregistrés uniquement dans ce téléphone.
+      Exporte-les de temps en temps : tu pourras les remettre si tu changes de
+      téléphone ou si le navigateur fait le ménage.
+    </p>
+    <div class="boutons-sauvegarde">
+      <button id="bouton-exporter-donnees" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-telecharger"></use></svg><span>Exporter</span></button>
+      <label class="bouton-secondaire" for="fichier-sauvegarde"><svg class="icone" aria-hidden="true"><use href="#icon-nouvelle-course"></use></svg><span>Restaurer</span></label>
+      <input type="file" id="fichier-sauvegarde" accept="application/json,.json" hidden />
+    </div>
+    <p id="message-sauvegarde" class="info"></p>
 
     <button id="bouton-retour-reglages" class="bouton-secondaire"><svg class="icone" aria-hidden="true"><use href="#icon-retour"></use></svg><span>Retour</span></button>
   </section>
@@ -314,6 +341,7 @@
       <button class="bouton-choix" data-periode="trimestre">3 mois</button>
     </div>
 
+    <div id="objectif-hebdo-bloc" class="objectif-hebdo-bloc cache"></div>
     <div id="resume-progression"></div>
     <div id="graphique-progression" class="graphique"></div>
 

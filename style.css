@@ -552,6 +552,167 @@ h1 {
   font-size: 0.8rem;
 }
 
+/* --- Temps par kilomètre (écran de fin) --- */
+
+.liste-splits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.split-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.split-numero {
+  color: var(--texte-attenue);
+  font-size: 0.8rem;
+  width: 5.5em;
+  flex-shrink: 0;
+}
+
+.split-barre {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bordure);
+  overflow: hidden;
+}
+
+.split-barre span {
+  display: block;
+  height: 100%;
+  background-image: linear-gradient(90deg, var(--accent), var(--accent-vif));
+}
+
+.split-temps {
+  font-size: 0.95rem;
+  font-weight: 700;
+  width: 3.5em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* --- Records battus (écran de fin) --- */
+
+.resume-records {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(160deg, var(--fond-carte), var(--fond-carte) 55%, rgba(255, 61, 104, 0.12));
+  border: 2px solid var(--accent);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  padding: 14px 16px;
+}
+
+.resume-records-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.resume-record-ligne {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-gain {
+  color: var(--accent-vert);
+  font-size: 0.8rem;
+  margin-left: 4px;
+}
+
+/* --- Objectif hebdomadaire --- */
+
+.ligne-objectif-hebdo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ligne-objectif-hebdo input {
+  width: 7em;
+  padding: 12px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: 2px solid var(--bordure);
+  background: var(--fond-carte);
+  color: var(--texte);
+}
+
+.unite-objectif {
+  color: var(--texte-attenue);
+  font-size: 0.9rem;
+}
+
+.objectif-hebdo-bloc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.objectif-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.objectif-chiffres {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.objectif-jauge {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bordure);
+  overflow: hidden;
+}
+
+.objectif-jauge span {
+  display: block;
+  height: 100%;
+  background-image: linear-gradient(90deg, var(--accent), var(--accent-vif));
+}
+
+.objectif-jauge.atteint span {
+  background-image: none;
+  background-color: var(--accent-vert);
+}
+
+.objectif-reste {
+  margin: 0;
+  color: var(--texte-attenue);
+  font-size: 0.8rem;
+}
+
+/* --- Sauvegarde des données --- */
+
+.boutons-sauvegarde {
+  display: flex;
+  gap: 10px;
+}
+
+.boutons-sauvegarde .bouton-secondaire {
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
 /* --- Progression --- */
 
 .choix-periode {

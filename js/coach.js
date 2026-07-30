@@ -221,3 +221,21 @@ export function phraseSegment(segment) {
 export function phraseFinSeance() {
   return 'Séance terminée, bravo pour ce travail !';
 }
+
+/**
+ * Annonce des records battus pendant la course qui vient de se terminer.
+ * On ne cite que le plus long (le plus significatif) et on mentionne le nombre
+ * des autres : énumérer huit records à voix haute serait interminable.
+ */
+export function phraseNouveauxRecords(records) {
+  if (!records || records.length === 0) return '';
+
+  const leplusLong = records.reduce((a, b) => (b.km > a.km ? b : a));
+  const principal = `Nouveau record personnel sur ${leplusLong.nom}, en ${formatDureeParlee(
+    Math.round(leplusLong.tempsSec)
+  )} !`;
+
+  if (records.length === 1) return principal;
+  const autres = records.length - 1;
+  return `${principal} Et ${autres} autre${autres > 1 ? 's' : ''} record${autres > 1 ? 's' : ''} au passage. Superbe course !`;
+}

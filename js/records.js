@@ -88,3 +88,75 @@ export function calculerRecords(courses) {
 export function historiqueExploitablePourRecords(courses) {
   return courses.some((c) => c.profil && c.profil.length >= 2);
 }
+
+/**
+ * Temps réalisé sur chaque kilomètre entier de la course (« splits »), comme
+ * sur une montre de sport. Le dernier kilomètre est partiel la plupart du
+ * temps : on le renvoie avec `partiel: true` et sa distance réelle, pour ne
+ * pas afficher un temps au km trompeur.
+ */
+export function calculerSplitsParKm(profil) {
+  if (!Array.isArray(profil) || profil.length < 2) return [];
+
+  const distanceTotale = profil[profil.length - 1].d;
+  const splits = [];
+  let precedentT = profil[0].t;
+
+  for (let km = 1; km <= Math.ceil(distanceTotale); km++) {
+    const borne = Math.min(km, distanceTotale);
+    const t = tempsALaDistance(profil, borne);
+    if (t === null) break;
+
+    const partiel = borne < km;
+    const distance = borne - (km - 1);
+    if (distance <= 0.001) break; // reste négligeable : pas un split à afficher
+
+    splits.push({
+      numero: km,
+      dureeSec: t - precedentT,
+      distanceKm: distance,
+      partiel,
+      allureSecParKm: (t - precedentT) / distance,
+    });
+    precedentT = t;
+  }
+
+  return splits;
+}
+
+/** Temps écoulé au moment précis où la distance `distanceKm` a été atteinte
+ * (interpolé entre les deux points GPS qui l'encadrent). */
+function tempsALaDistance(profil, distanceKm) {
+  if (distanceKm <= profil[0].d) return profil[0].t;
+  for (let i = 1; i < profil.length; i++) {
+    if (profil[i].d < distanceKm) continue;
+    const ecartD = profil[i].d - profil[i - 1].d;
+    const ratio = ecartD > 0 ? (distanceKm - profil[i - 1].d) / ecartD : 0;
+    return profil[i - 1].t + ratio * (profil[i].t - profil[i - 1].t);
+  }
+  return null;
+}
+
+/**
+ * Compare une course qui vient d'être terminée aux records établis par les
+ * courses précédentes, et retourne les distances où le record tombe.
+ *
+ * Choix assumé : une distance jamais courue auparavant ne compte pas comme un
+ * record. Sinon la toute première course annoncerait fièrement huit records
+ * d'un coup, ce qui n'a aucun sens.
+ */
+export function detecterNouveauxRecords(profilNouvelleCourse, coursesPrecedentes) {
+  if (!Array.isArray(profilNouvelleCourse) || profilNouvelleCourse.length < 2) return [];
+
+  const ancienRecords = calculerRecords(coursesPrecedentes);
+
+  return DISTANCES_STANDARD.map((distance, index) => {
+    const ancien = ancienRecords[index].tempsSec;
+    if (ancien === null) return null; // distance jamais courue : voir ci-dessus
+
+    const nouveau = meilleurTempsSurDistance(profilNouvelleCourse, distance.km);
+    if (nouveau === null || nouveau >= ancien) return null;
+
+    return { ...distance, tempsSec: nouveau, ancienTempsSec: ancien, gainSec: ancien - nouveau };
+  }).filter(Boolean);
+}
