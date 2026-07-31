@@ -83,6 +83,12 @@ export function coursesSurPeriode(jours) {
     .reverse();
 }
 
+/** Remplace tout l'historique (utilisé par la restauration d'une sauvegarde,
+ * qui a déjà fusionné et dédoublonné de son côté). */
+export function remplacerCourses(courses) {
+  return ecrire(courses.slice(0, MAX_COURSES_CONSERVEES));
+}
+
 export function viderHistorique() {
   try {
     localStorage.removeItem(CLE_STOCKAGE);
@@ -128,89 +134,4 @@ export function distanceSemaineEnCours() {
   return listerCourses()
     .filter((c) => new Date(c.date).getTime() >= lundi.getTime())
     .reduce((somme, c) => somme + (c.distanceKm || 0), 0);
-}
-
-// ===================== SAUVEGARDE / RESTAURATION =====================
-
-const VERSION_SAUVEGARDE = 1;
-
-/** Contenu d'un fichier de sauvegarde (texte JSON) de tout l'historique. */
-export function genererSauvegarde() {
-  return JSON.stringify(
-    {
-      application: 'coach-course',
-      version: VERSION_SAUVEGARDE,
-      exporteLe: new Date().toISOString(),
-      objectifHebdoKm: lireObjectifHebdo(),
-      courses: listerCourses(),
-    },
-    null,
-    2
-  );
-}
-
-/**
- * Restaure une sauvegarde. Le fichier vient de l'extérieur : on vérifie sa
- * structure champ par champ avant d'écraser quoi que ce soit, et on ne garde
- * que des valeurs du bon type — un fichier corrompu ou étranger à l'appli ne
- * doit pas pouvoir casser l'historique existant.
- *
- * Retourne { nombre } en cas de succès, ou { erreur } (message destiné à
- * l'utilisateur).
- */
-export function restaurerSauvegarde(texte) {
-  let donnees;
-  try {
-    donnees = JSON.parse(texte);
-  } catch (e) {
-    return { erreur: "Ce fichier n'est pas une sauvegarde valide." };
-  }
-
-  if (!donnees || donnees.application !== 'coach-course' || !Array.isArray(donnees.courses)) {
-    return { erreur: "Ce fichier ne semble pas être une sauvegarde de Coach Course." };
-  }
-
-  const courses = donnees.courses.filter(estCourseValide).map(nettoyerCourse);
-  if (courses.length === 0) {
-    return { erreur: 'Cette sauvegarde ne contient aucune course exploitable.' };
-  }
-
-  if (!ecrire(courses.slice(0, MAX_COURSES_CONSERVEES))) {
-    return { erreur: "Impossible d'enregistrer : l'espace de stockage est plein." };
-  }
-
-  if (typeof donnees.objectifHebdoKm === 'number' && donnees.objectifHebdoKm > 0) {
-    ecrireObjectifHebdo(donnees.objectifHebdoKm);
-  }
-
-  return { nombre: courses.length };
-}
-
-function estCourseValide(course) {
-  return (
-    course &&
-    typeof course === 'object' &&
-    typeof course.nomParcours === 'string' &&
-    typeof course.date === 'string' &&
-    !Number.isNaN(new Date(course.date).getTime())
-  );
-}
-
-/** Ne recopie que les champs attendus, avec le bon type : on n'injecte pas
- * dans l'appli des propriétés arbitraires venues d'un fichier externe. */
-function nettoyerCourse(course) {
-  const nombreOuNull = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-  const profilValide =
-    Array.isArray(course.profil) &&
-    course.profil.every((p) => p && typeof p.d === 'number' && typeof p.t === 'number');
-
-  return {
-    nomParcours: course.nomParcours.slice(0, 200),
-    date: course.date,
-    distanceKm: nombreOuNull(course.distanceKm) || 0,
-    dureeSec: nombreOuNull(course.dureeSec) || 0,
-    allureMoyenneSecParKm: nombreOuNull(course.allureMoyenneSecParKm),
-    configSeance: course.configSeance && typeof course.configSeance === 'object' ? course.configSeance : null,
-    profil: profilValide ? course.profil : null,
-  };
 }

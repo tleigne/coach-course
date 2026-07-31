@@ -15,6 +15,38 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-29 : restauration par fusion, sans doublons
+
+L'export/import existait depuis le 28/07, mais la restauration **écrasait**
+l'historique existant, en demandant confirmation. Mauvais choix : sur un
+transfert entre téléphones, on veut réunir ses données, pas en sacrifier
+une partie.
+
+Nouveau principe : **on ajoute, on n'écrase jamais**.
+- Les courses sont fusionnées. La date d'enregistrement (à la milliseconde)
+  sert d'identifiant naturel : deux courses de même date sont la même, sans
+  avoir à inventer un identifiant. Restaurer deux fois le même fichier donne
+  exactement le même résultat qu'une fois.
+- Si une course connue localement n'a pas de profil distance/temps mais que
+  le fichier en contient un (cas d'un historique tronqué pour libérer de la
+  place), le profil est récupéré au passage.
+- Le **plan d'entraînement** est désormais inclus dans l'export — il ne
+  l'était pas, incohérence depuis son ajout. À la restauration il n'est
+  repris **que s'il n'y a pas déjà un plan en cours**, dont la progression
+  serait perdue. Même règle pour l'objectif hebdomadaire.
+- Plus de confirmation à l'import : elle n'a plus lieu d'être puisque rien
+  ne peut être perdu.
+
+Le code de sauvegarde quitte `js/historique.js` pour `js/sauvegarde.js` :
+il doit maintenant connaître les plans autant que l'historique, et il
+n'avait pas à faire dépendre l'un de l'autre.
+
+**Tests** : transfert vers un téléphone vierge, double restauration du même
+fichier (0 doublon), fusion partielle avec une course commune, récupération
+d'un profil manquant, les 3 cas du plan (vierge / plan en cours préservé /
+plan corrompu ignoré), les 7 fichiers invalides, et le parcours réel dans
+l'interface via un vrai fichier déposé dans le champ. Aucune erreur console.
+
 ## Fait — 2026-07-29 : stockage durable (protection contre l'effacement auto)
 
 Question de Thibault (« comment ça va se sauvegarder s'il n'y a pas de

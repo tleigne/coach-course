@@ -42,9 +42,8 @@ import {
   lireObjectifHebdo,
   ecrireObjectifHebdo,
   distanceSemaineEnCours,
-  genererSauvegarde,
-  restaurerSauvegarde,
 } from './historique.js';
+import { genererSauvegarde, restaurerSauvegarde } from './sauvegarde.js';
 import {
   calculerRecords,
   historiqueExploitablePourRecords,
@@ -1166,30 +1165,36 @@ inputSauvegarde.addEventListener('change', async () => {
   if (!fichier) return;
   messageSauvegarde.textContent = '';
 
-  const existantes = listerCourses().length;
-  if (
-    existantes > 0 &&
-    !confirm(
-      `Restaurer remplacera tes ${existantes} course${existantes > 1 ? 's' : ''} actuelle${existantes > 1 ? 's' : ''} par celles de la sauvegarde. Continuer ?`
-    )
-  ) {
-    inputSauvegarde.value = '';
-    return;
-  }
-
+  // Pas de confirmation à demander : la restauration ajoute ce qui manque
+  // sans rien écraser (voir js/sauvegarde.js), donc elle ne peut rien faire
+  // perdre. Restaurer deux fois le même fichier ne crée pas de doublon.
   try {
     const resultat = restaurerSauvegarde(await fichier.text());
     messageSauvegarde.textContent = resultat.erreur
       ? resultat.erreur
-      : `${resultat.nombre} course${resultat.nombre > 1 ? 's' : ''} restaurée${resultat.nombre > 1 ? 's' : ''}.`;
+      : resumerRestauration(resultat);
     if (!resultat.erreur) {
       champObjectifHebdo.value = lireObjectifHebdo() || '';
+      afficherProchaineSeance();
     }
   } catch (e) {
     messageSauvegarde.textContent = "Impossible de lire ce fichier.";
   }
   inputSauvegarde.value = '';
 });
+
+function resumerRestauration({ ajoutees, deja, enrichies, total, planRestaure }) {
+  const morceaux = [];
+  morceaux.push(
+    ajoutees === 0
+      ? 'Aucune nouvelle course à ajouter'
+      : `${ajoutees} course${ajoutees > 1 ? 's' : ''} ajoutée${ajoutees > 1 ? 's' : ''}`
+  );
+  if (deja > 0) morceaux.push(`${deja} déjà présente${deja > 1 ? 's' : ''}`);
+  if (enrichies > 0) morceaux.push(`${enrichies} complétée${enrichies > 1 ? 's' : ''}`);
+  if (planRestaure) morceaux.push("plan d'entraînement restauré");
+  return `${morceaux.join(', ')}. Tu as maintenant ${total} course${total > 1 ? 's' : ''}.`;
+}
 
 function afficherListeVoix() {
   const conteneur = document.getElementById('liste-voix');
