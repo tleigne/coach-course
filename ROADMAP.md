@@ -15,6 +15,26 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-29 : stockage durable (protection contre l'effacement auto)
+
+Question de Thibault (« comment ça va se sauvegarder s'il n'y a pas de
+serveur ? ») qui a révélé un manque : l'appli n'appelait jamais
+`navigator.storage.persist()`. Sans cette demande, Android/Chrome
+s'autorise à supprimer les données du site quand l'espace vient à
+manquer — or ici ces données sont *tout* (courses, records accumulés sur
+des mois, plan en cours) et aucun serveur ne peut les rejouer.
+
+La demande est faite au démarrage. Elle est généralement accordée sans
+rien demander à l'utilisateur quand l'appli est installée sur l'écran
+d'accueil ; sinon elle est refusée sans casse. L'écran Réglages affiche
+l'état réel du stockage, avec la marche à suivre en cas de refus.
+
+Ça **ne remplace pas l'export manuel** : un effacement volontaire des
+données de navigation supprimera tout de toute façon.
+
+Testé sur les trois branches : accordé, refusé, et API en erreur (où l'on
+n'affiche rien plutôt que d'inquiéter inutilement).
+
 ## Fait — 2026-07-29 : plan d'entraînement sur plusieurs semaines
 
 Boucle enfin la demande d'origine du 22/07 (« se concocter un plan

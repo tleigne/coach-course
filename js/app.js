@@ -1133,6 +1133,7 @@ function afficherReglages() {
   const objectif = lireObjectifHebdo();
   champObjectifHebdo.value = objectif > 0 ? objectif : '';
   messageSauvegarde.textContent = '';
+  afficherEtatStockage();
 }
 
 // --- Objectif hebdomadaire ---
@@ -1915,9 +1916,48 @@ if (!appliDejaInstallee()) {
   }
 }
 
+/**
+ * Demande au navigateur de traiter les données de l'appli comme durables.
+ *
+ * Sans ça, Android/Chrome s'autorise à les effacer tout seul quand l'espace
+ * de stockage vient à manquer — et ici, ces données sont *tout* : courses,
+ * records accumulés sur des mois, plan d'entraînement en cours. Il n'y a
+ * aucun serveur pour les rejouer. La demande est généralement accordée sans
+ * rien demander à l'utilisateur quand l'appli est installée sur l'écran
+ * d'accueil ; sinon elle est simplement refusée, sans casse.
+ *
+ * Ça ne remplace pas l'export manuel : un effacement volontaire des données
+ * de navigation supprimera tout de toute façon.
+ */
+async function demanderStockageDurable() {
+  if (!navigator.storage || !navigator.storage.persist) return null;
+  try {
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function afficherEtatStockage() {
+  const element = document.getElementById('etat-stockage');
+  if (!element) return;
+  const durable = await demanderStockageDurable();
+
+  if (durable === true) {
+    element.textContent = '✓ Tes données sont protégées : le téléphone ne les effacera pas tout seul pour faire de la place.';
+  } else if (durable === false) {
+    element.textContent =
+      "⚠ Le téléphone s'autorise à effacer ces données s'il manque de place. Installe l'appli sur ton écran d'accueil pour renforcer leur protection, et exporte-les régulièrement.";
+  } else {
+    element.textContent = '';
+  }
+}
+
 appliquerTheme(themePrefereActuel());
 restaurerPrefsSeance();
 afficherProchaineSeance();
+demanderStockageDurable();
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
   evenement.preventDefault();
