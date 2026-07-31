@@ -51,6 +51,18 @@ import {
   calculerSplitsParKm,
   detecterNouveauxRecords,
 } from './records.js';
+import {
+  OBJECTIFS,
+  genererPlan,
+  sauvegarderPlan,
+  lirePlan,
+  supprimerPlan,
+  basculerSeanceFaite,
+  semaineCourante,
+  avancementPlan,
+  libelleType,
+  semainesJusqua,
+} from './plan.js';
 import { genererGPXDepuisTrace, telechargerFichier } from './export.js';
 import {
   genererSeanceSeuil,
@@ -178,6 +190,7 @@ const ecrans = {
   chrono: document.getElementById('ecran-chrono'),
   records: document.getElementById('ecran-records'),
   progression: document.getElementById('ecran-progression'),
+  plan: document.getElementById('ecran-plan'),
 };
 
 function afficherEcran(nom) {
@@ -1554,6 +1567,301 @@ function genererGraphiqueProgression(courses) {
   </svg>`;
 }
 
+// ===================== ÉCRAN 10 : PLAN D'ENTRAÎNEMENT =====================
+
+let objectifPlanChoisi = '10km';
+let seancesParSemaineChoisies = 3;
+
+document.getElementById('bouton-voir-plan').addEventListener('click', () => {
+  afficherPlan();
+  afficherEcran('plan');
+});
+
+document.getElementById('bouton-retour-plan').addEventListener('click', () => {
+  afficherEcran('import');
+});
+
+/** Volume hebdomadaire réellement encaissé ces 4 dernières semaines. C'est le
+ * point de départ du plan : bâtir au-dessus de ce que le coureur fait
+ * aujourd'hui est le meilleur moyen de le blesser dès la 1re semaine. */
+function volumeHebdoRecent() {
+  const courses = coursesSurPeriode(28);
+  const total = courses.reduce((somme, c) => somme + (c.distanceKm || 0), 0);
+  return total / 4;
+}
+
+function afficherPlan() {
+  const plan = lirePlan();
+  document.getElementById('creation-plan').classList.toggle('cache', !!plan);
+  document.getElementById('plan-actif').classList.toggle('cache', !plan);
+
+  if (plan) {
+    afficherPlanActif(plan);
+  } else {
+    afficherFormulairePlan();
+  }
+}
+
+function afficherFormulairePlan() {
+  document.getElementById('choix-objectif-plan').innerHTML = OBJECTIFS.map(
+    (o) => `<button class="bouton-choix${o.id === objectifPlanChoisi ? ' selectionne' : ''}"
+      data-objectif="${o.id}">${o.nom}</button>`
+  ).join('');
+
+  document.querySelectorAll('#choix-seances-semaine .bouton-choix').forEach((bouton) => {
+    bouton.classList.toggle('selectionne', Number(bouton.dataset.seances) === seancesParSemaineChoisies);
+  });
+
+  const volume = volumeHebdoRecent();
+  document.getElementById('info-volume-plan').textContent =
+    volume > 0
+      ? `Le plan partira de ton volume actuel, environ ${formatDistance(volume)} par semaine, et montera progressivement.`
+      : "Tu n'as pas encore assez de courses enregistrées : le plan partira d'une base prudente que tu pourras dépasser sans souci.";
+
+  document.getElementById('erreur-plan').textContent = '';
+}
+
+document.getElementById('choix-objectif-plan').addEventListener('click', (evenement) => {
+  const bouton = evenement.target.closest('[data-objectif]');
+  if (!bouton) return;
+  objectifPlanChoisi = bouton.dataset.objectif;
+  afficherFormulairePlan();
+});
+
+document.querySelectorAll('#choix-seances-semaine .bouton-choix').forEach((bouton) => {
+  bouton.addEventListener('click', () => {
+    seancesParSemaineChoisies = Number(bouton.dataset.seances);
+    afficherFormulairePlan();
+  });
+});
+
+document.getElementById('bouton-creer-plan').addEventListener('click', () => {
+  const zoneErreur = document.getElementById('erreur-plan');
+  const date = document.getElementById('plan-date').value;
+
+  if (!date) {
+    zoneErreur.textContent = "Choisis la date de ton objectif.";
+    return;
+  }
+
+  const resultat = genererPlan({
+    objectifId: objectifPlanChoisi,
+    dateObjectif: date,
+    seancesParSemaine: seancesParSemaineChoisies,
+    volumeDepartKm: volumeHebdoRecent(),
+  });
+
+  if (resultat.erreur) {
+    zoneErreur.textContent = resultat.erreur;
+    return;
+  }
+
+  if (!sauvegarderPlan(resultat.plan)) {
+    zoneErreur.textContent = "Impossible d'enregistrer le plan : l'espace de stockage est plein.";
+    return;
+  }
+
+  afficherPlan();
+  afficherProchaineSeance();
+});
+
+document.getElementById('bouton-supprimer-plan').addEventListener('click', () => {
+  if (!confirm('Abandonner ce plan ? Sa progression sera perdue.')) return;
+  supprimerPlan();
+  afficherPlan();
+  afficherProchaineSeance();
+});
+
+function afficherPlanActif(plan) {
+  const avancement = avancementPlan(plan);
+  const courante = semaineCourante(plan);
+  const restantes = Math.max(0, semainesJusqua(plan.dateObjectif));
+  const dateTexte = new Date(plan.dateObjectif).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  document.getElementById('plan-entete').innerHTML = `
+    <div class="plan-entete-carte">
+      <div class="plan-objectif">
+        <span class="plan-objectif-nom">${plan.objectifNom}</span>
+        <span class="plan-objectif-date">${dateTexte}</span>
+      </div>
+      <div class="objectif-jauge"><span style="width: ${avancement.pourcentage}%"></span></div>
+      <div class="plan-entete-details">
+        <span>Semaine ${courante} sur ${plan.semaines.length}</span>
+        <span>${avancement.faites} / ${avancement.total} séances</span>
+      </div>
+      <p class="objectif-reste">${
+        restantes > 0
+          ? `Plus que ${restantes} semaine${restantes > 1 ? 's' : ''} avant le jour J.`
+          : "C'est la dernière ligne droite."
+      }</p>
+    </div>`;
+
+  document.getElementById('plan-semaines').innerHTML = plan.semaines
+    .map((semaine) => rendreSemainePlan(semaine, courante))
+    .join('');
+
+  const semaineActuelle = document.querySelector('.semaine-plan.actuelle');
+  if (semaineActuelle) semaineActuelle.scrollIntoView({ block: 'nearest' });
+}
+
+const LIBELLE_SEMAINE = {
+  developpement: 'Développement',
+  recuperation: 'Récupération',
+  affutage: 'Affûtage',
+};
+
+function rendreSemainePlan(semaine, semaineCouranteNumero) {
+  const estActuelle = semaine.numero === semaineCouranteNumero;
+  const seances = semaine.seances
+    .map(
+      (seance, index) => `
+      <div class="seance-plan${seance.faite ? ' faite' : ''}">
+        <button class="case-seance" data-semaine="${semaine.numero}" data-index="${index}"
+          aria-label="${seance.faite ? 'Marquer comme non faite' : 'Marquer comme faite'}">
+          <svg class="icone icone-petite" aria-hidden="true"><use href="#icon-valide"></use></svg>
+        </button>
+        <div class="seance-infos">
+          <span class="seance-jour">${seance.jour} · ${libelleType(seance.type)}</span>
+          <span class="seance-nom">${echapperHTML(seance.nom)}</span>
+          <span class="seance-desc">${echapperHTML(seance.description)}</span>
+        </div>
+        <button class="bouton-lancer-seance" data-lancer-semaine="${semaine.numero}" data-lancer-index="${index}"
+          aria-label="Lancer cette séance">
+          <svg class="icone" aria-hidden="true"><use href="#icon-lecture"></use></svg>
+        </button>
+      </div>`
+    )
+    .join('');
+
+  return `
+    <div class="semaine-plan${estActuelle ? ' actuelle' : ''}">
+      <div class="semaine-entete">
+        <span class="semaine-numero">Semaine ${semaine.numero}${estActuelle ? ' · en cours' : ''}</span>
+        <span class="semaine-badge badge-${semaine.typeSemaine}">${LIBELLE_SEMAINE[semaine.typeSemaine]}</span>
+        <span class="semaine-volume">${semaine.volumeKm} km</span>
+      </div>
+      <div class="seances-plan">${seances}</div>
+    </div>`;
+}
+
+document.getElementById('plan-semaines').addEventListener('click', (evenement) => {
+  const caseSeance = evenement.target.closest('.case-seance');
+  if (caseSeance) {
+    const plan = lirePlan();
+    if (!plan) return;
+    sauvegarderPlan(basculerSeanceFaite(plan, Number(caseSeance.dataset.semaine), Number(caseSeance.dataset.index)));
+    afficherPlan();
+    afficherProchaineSeance();
+    return;
+  }
+
+  const boutonLancer = evenement.target.closest('.bouton-lancer-seance');
+  if (!boutonLancer) return;
+  const plan = lirePlan();
+  if (!plan) return;
+  const semaine = plan.semaines.find((s) => s.numero === Number(boutonLancer.dataset.lancerSemaine));
+  const seance = semaine && semaine.seances[Number(boutonLancer.dataset.lancerIndex)];
+  if (seance) preparerSeanceDuPlan(seance);
+});
+
+/** Formate une allure en secondes/km vers la saisie attendue par le
+ * formulaire d'objectif (« 5:30 »). */
+function allureVersSaisie(secParKm) {
+  const total = Math.round(secParKm);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Prépare l'écran objectif à partir d'une séance du plan, sans la démarrer :
+ * le coureur peut encore importer un parcours ou ajuster avant de lancer.
+ */
+function preparerSeanceDuPlan(seance) {
+  etat.parcours = null;
+  projecteurParcours = null;
+  inputFichier.value = '';
+  blocResumeParcours.classList.add('cache');
+  choixObjectifTemps.classList.add('cache');
+
+  // Endurance, sortie longue et jour J ne sont pas des séances à segments :
+  // ce sont des courses à allure régulière.
+  if (seance.type === 'endurance' || seance.type === 'sortie_longue' || seance.type === 'objectif') {
+    document.querySelector('input[name="type-objectif"][value="allure"]').click();
+    document.getElementById('valeur-allure-cible').value = allureVersSaisie(seance.allureCibleSecParKm);
+  } else {
+    document.querySelector('input[name="type-objectif"][value="seance"]').click();
+    const radio = document.querySelector(`input[name="type-seance"][value="${seance.type}"]`);
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change'));
+    }
+    if (seance.type === 'tempo') document.getElementById('tempo-duree-min').value = seance.dureeMin;
+    if (seance.type === 'seuil') document.getElementById('seuil-duree-min').value = seance.dureeMin;
+    if (seance.type === 'vma') {
+      document.getElementById('vma-repetitions').value = seance.repetitions;
+      document.getElementById('vma-effort-sec').value = seance.dureeEffortSec;
+      document.getElementById('vma-recup-sec').value = seance.dureeRecupSec;
+    }
+    if (seance.type === 'fractionne') {
+      document.getElementById('fractionne-repetitions').value = seance.repetitions;
+      document.getElementById('fractionne-distance-m').value = seance.distanceEffortM;
+      document.getElementById('fractionne-recup-m').value = seance.distanceRecupM;
+      document.getElementById('fractionne-allure').value = allureVersSaisie(seance.allureCibleSecParKm);
+    }
+  }
+
+  afficherEcran('objectif');
+}
+
+/** Rappel de la prochaine séance non faite, sur l'écran d'accueil : tout
+ * l'intérêt d'un plan est de savoir quoi faire aujourd'hui sans le chercher. */
+function afficherProchaineSeance() {
+  const bloc = document.getElementById('prochaine-seance');
+  const plan = lirePlan();
+  if (!plan) {
+    bloc.classList.add('cache');
+    return;
+  }
+
+  const courante = semaineCourante(plan);
+  const semaine = plan.semaines.find((s) => s.numero === courante);
+  const index = semaine ? semaine.seances.findIndex((s) => !s.faite) : -1;
+
+  if (index === -1) {
+    bloc.innerHTML = `
+      <div class="prochaine-seance-entete">
+        <svg class="icone" aria-hidden="true"><use href="#icon-valide"></use></svg>
+        <span>Semaine ${courante} bouclée. Beau travail !</span>
+      </div>`;
+    bloc.classList.remove('cache');
+    return;
+  }
+
+  const seance = semaine.seances[index];
+  bloc.innerHTML = `
+    <div class="prochaine-seance-entete">
+      <svg class="icone" aria-hidden="true"><use href="#icon-plan"></use></svg>
+      <span>Ta prochaine séance · semaine ${courante}</span>
+    </div>
+    <div class="prochaine-seance-corps">
+      <div>
+        <span class="seance-nom">${echapperHTML(seance.nom)}</span>
+        <span class="seance-jour">${seance.jour} · ${libelleType(seance.type)}</span>
+      </div>
+      <button id="bouton-lancer-prochaine" class="bouton-principal bouton-lancer-compact">
+        <svg class="icone" aria-hidden="true"><use href="#icon-lecture"></use></svg><span>Lancer</span>
+      </button>
+    </div>`;
+  bloc.classList.remove('cache');
+
+  document.getElementById('bouton-lancer-prochaine').addEventListener('click', () => {
+    preparerSeanceDuPlan(seance);
+  });
+}
+
 // ===================== SERVICE WORKER =====================
 
 if ('serviceWorker' in navigator) {
@@ -1609,6 +1917,7 @@ if (!appliDejaInstallee()) {
 
 appliquerTheme(themePrefereActuel());
 restaurerPrefsSeance();
+afficherProchaineSeance();
 
 window.addEventListener('beforeinstallprompt', (evenement) => {
   evenement.preventDefault();

@@ -15,6 +15,48 @@ pour une prochaine session : passer l'appli dans **Lighthouse** (outil
 gratuit intégré à Chrome) pour un audit performance/accessibilité/PWA
 objectif.
 
+## Fait — 2026-07-29 : plan d'entraînement sur plusieurs semaines
+
+Boucle enfin la demande d'origine du 22/07 (« se concocter un plan
+d'entraînement et le suivre, comme le programmer un coach pour un
+athlète »). Les séances existaient depuis le 23/07, mais rien ne disait
+*quoi faire quand* : `js/plan.js` décide de la programmation.
+
+**Ce qui est généré** : on choisit un objectif (5 km, 10 km, semi,
+marathon), une date et 3 à 5 séances par semaine ; l'appli produit le
+programme semaine par semaine jusqu'au jour J, chaque séance étant
+lançable en un clic (elle pré-remplit l'écran objectif sans démarrer,
+pour laisser le choix d'importer un parcours avant).
+
+**Règles d'entraînement encodées** (pas des choix arbitraires) :
+progression du volume ~8 % par palier, semaine allégée toutes les 4
+semaines, affûtage final, répartition polarisée ~80/20 (une seule séance
+dure, le reste en endurance facile), sortie longue plafonnée selon
+l'objectif, et types de séances qui évoluent du foncier (tempo, seuil)
+vers le spécifique (VMA, fractionné à l'allure du jour J).
+
+**Le volume de départ vient de l'historique réel** (moyenne des 4
+dernières semaines) : un plan qui démarre au-dessus de ce que le coureur
+encaisse déjà est le meilleur moyen de le blesser dès la 1re semaine.
+
+**Deux vrais défauts trouvés par les tests, corrigés :**
+1. *Progression linéaire* : un palier fixe de 2,5 km vaut +10 % à 25 km
+   mais +6 % à 42 km — donc la charge était la plus agressive au début,
+   là où le coureur est le moins prêt. Remplacée par une progression
+   **géométrique** (chaque palier vaut le même pourcentage).
+2. *Les semaines allégées consommaient un palier de progression*, si
+   bien que la reprise devait en rattraper deux d'un coup (+16 %). La
+   montée n'avance désormais que sur les semaines de développement, et
+   la reprise repart juste au-dessus du dernier palier travaillé.
+
+**Tests** : 1512 combinaisons (4 objectifs × 21 durées × 3 rythmes ×
+6 volumes de départ) vérifiées automatiquement — aucune ne dépasse la
+règle des 10 %, ni entre deux semaines consécutives ni à la reprise
+après une semaine allégée. Les 7 types de séance ont été lancés depuis
+le plan pour vérifier qu'ils remplissent bien le formulaire d'objectif,
+une séance a été menée jusqu'à son terme, et le suivi (cocher/décocher,
+persistance, suppression du plan) validé. Aucune erreur console.
+
 ## Fait — 2026-07-28 (fin) : refonte design & UX
 
 Constat de départ : l'accueil était passé de 3 à 6 liens soulignés

@@ -1029,6 +1029,240 @@ h1 {
   }
 }
 
+/* --- Plan d'entraînement --- */
+
+.choix-objectif-plan {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.champ-date {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  border: 2px solid var(--bordure);
+  background: var(--fond-carte);
+  color: var(--texte);
+}
+
+.plan-entete-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(160deg, var(--fond-carte), var(--fond-carte) 55%, rgba(255, 61, 104, 0.1));
+  border: 2px solid var(--accent);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.plan-objectif {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.plan-objectif-nom {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.plan-objectif-date {
+  color: var(--texte-attenue);
+  font-size: 0.85rem;
+}
+
+.plan-entete-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#plan-semaines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.semaine-plan {
+  background: var(--fond-carte);
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.semaine-plan.actuelle {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.semaine-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.semaine-numero {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.semaine-volume {
+  margin-left: auto;
+  color: var(--texte-attenue);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.semaine-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--bordure);
+  color: var(--texte-attenue);
+}
+
+.badge-recuperation {
+  color: var(--accent-vert);
+  border-color: var(--accent-vert);
+}
+
+.badge-affutage {
+  color: var(--accent-vif);
+  border-color: var(--accent-vif);
+}
+
+.seances-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seance-plan {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--bordure);
+}
+
+.seance-plan.faite {
+  opacity: 0.5;
+}
+
+.seance-plan.faite .seance-nom {
+  text-decoration: line-through;
+}
+
+.case-seance {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 2px solid var(--bordure);
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.seance-plan.faite .case-seance {
+  background: var(--accent-vert);
+  border-color: var(--accent-vert);
+  color: #fff;
+}
+
+.seance-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.seance-jour {
+  color: var(--texte-attenue);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.seance-nom {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.seance-desc {
+  color: var(--texte-attenue);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.bouton-lancer-seance {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* --- Rappel de la prochaine séance, sur l'accueil --- */
+
+.prochaine-seance {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(160deg, var(--fond-carte), var(--fond-carte) 55%, rgba(255, 61, 104, 0.12));
+  border: 2px solid var(--accent);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  padding: 14px 16px;
+}
+
+.prochaine-seance-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.prochaine-seance-corps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prochaine-seance-corps > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bouton-lancer-compact {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+}
+
 /* --- En-tête commun des écrans secondaires --- */
 
 .entete-ecran {
